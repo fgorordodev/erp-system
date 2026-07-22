@@ -1,10 +1,23 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { HealthModule } from './modules/health/health.module';
+import { ConfigModule } from '@nestjs/config/dist/config.module';
+import { validateEnv } from './config';
+import { RequestIdMiddleware } from './common/middlewares/request-id.middleware';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '../../.env',
+      validate: validateEnv,
+    }),
+    HealthModule,
+  ],
+  controllers: [],
+  providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('{*path}');
+  }
+}
