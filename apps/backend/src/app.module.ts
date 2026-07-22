@@ -3,6 +3,7 @@ import { HealthModule } from './modules/health/health.module';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { validateEnv } from './config';
 import { RequestIdMiddleware } from './common/middlewares/request-id.middleware';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { RequestIdMiddleware } from './common/middlewares/request-id.middleware'
       validate: validateEnv,
     }),
     HealthModule,
+    DatabaseModule,
   ],
   controllers: [],
   providers: [],
