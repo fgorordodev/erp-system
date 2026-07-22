@@ -7,10 +7,11 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
-  @ApiOperation({
-    summary: 'API health check',
-  })
   @Get()
+  @ApiOperation({
+    summary: 'Check API health status',
+    description: 'Returns API and database availability',
+  })
   check() {
     return this.healthService.check();
   }

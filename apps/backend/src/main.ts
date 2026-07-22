@@ -4,20 +4,27 @@ import { ConfigService } from '@nestjs/config/dist/config.service';
 import {
   HttpExceptionFilter,
   LoggingInterceptor,
+  PrismaExceptionFilter,
   ResponseInterceptor,
 } from './common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
 import helmet from 'helmet';
+import { swaggerConfig } from './config';
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger('Bootstrap');
+logger.log('ERP API starting...');
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  const configService = app.get(ConfigService);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
   app.setGlobalPrefix('api');
+  const configService = app.get(ConfigService);
 
   app.enableCors({
-    origin: [configService.get<string>('FRONTEND_URL')],
+    origin: [configService.getOrThrow<string>('FRONTEND_URL')],
     credentials: true,
   });
 
@@ -27,7 +34,7 @@ async function bootstrap() {
     new LoggingInterceptor(),
     new ResponseInterceptor(),
   );
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new HttpExceptionFilter(), new PrismaExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -36,20 +43,19 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('ERP System API')
-    .setDescription('Backend API for ERP System')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  const swaggerConfigSettings = swaggerConfig();
 
-  const document = SwaggerModule.createDocument(app, config);
+  const swaggerDocument = SwaggerModule.createDocument(
+    app,
+    swaggerConfigSettings,
+  );
 
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('docs', app, swaggerDocument);
 
-  const port = configService.get<number>('BACKEND_PORT') ?? 3000;
+  const port = configService.getOrThrow<number>('BACKEND_PORT');
 
   await app.listen(port);
+  logger.log(`API running on port: ${port}`);
 }
 
 void bootstrap();
