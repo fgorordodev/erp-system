@@ -8,6 +8,7 @@ export const envSchema = z.object({
   BACKEND_PORT: z.coerce.number().default(3000),
 
   DATABASE_URL: z.string().min(1),
+  FRONTEND_URL: z.string().min(1),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
