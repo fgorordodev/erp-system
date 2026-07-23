@@ -7,7 +7,6 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-
 import {
   ApiBearerAuth,
   ApiConflictResponse,
@@ -19,14 +18,15 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { Permissions, PERMISSIONS } from '../../security';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  UpdateUserStatusDto,
+  UserResponseDto,
+  UserRoleResponseDto,
+} from './dto';
 import { UsersService } from './users.service';
-
-import { CreateUserDto } from './dto/create-user.dto';
-
-import { UpdateUserDto } from './dto/update-user.dto';
-
-import { UserResponseDto } from './dto/user-response.dto';
-import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
@@ -35,9 +35,10 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @Permissions(PERMISSIONS.USER_CREATE.name)
   @ApiOperation({
     summary: 'Create a new user',
-    description: 'Creates a new user account with encrypted password.',
+    description: 'Creates a new user account with a hashed password.',
   })
   @ApiCreatedResponse({
     description: 'User successfully created.',
@@ -51,9 +52,10 @@ export class UsersController {
   }
 
   @Get()
+  @Permissions(PERMISSIONS.USER_READ.name)
   @ApiOperation({
-    summary: 'Get all users',
-    description: 'Returns all active users.',
+    summary: 'Get users',
+    description: 'Returns all users that have not been deleted.',
   })
   @ApiOkResponse({
     description: 'List of users.',
@@ -65,9 +67,10 @@ export class UsersController {
   }
 
   @Get(':id')
+  @Permissions(PERMISSIONS.USER_READ.name)
   @ApiOperation({
     summary: 'Get user by id',
-    description: 'Returns a single user by identifier.',
+    description: 'Returns a non-deleted user by identifier.',
   })
   @ApiParam({
     name: 'id',
@@ -86,9 +89,11 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @Permissions(PERMISSIONS.USER_UPDATE.name)
   @ApiOperation({
     summary: 'Update user',
-    description: 'Updates user information.',
+    description:
+      'Updates user profile information. Password changes use a separate flow.',
   })
   @ApiParam({
     name: 'id',
@@ -99,6 +104,9 @@ export class UsersController {
     description: 'User successfully updated.',
     type: UserResponseDto,
   })
+  @ApiConflictResponse({
+    description: 'Email is already registered.',
+  })
   @ApiNotFoundResponse({
     description: 'User was not found.',
   })
@@ -106,31 +114,11 @@ export class UsersController {
     return this.usersService.update(id, dto);
   }
 
-  @Delete(':id')
-  @ApiOperation({
-    summary: 'Delete user',
-    description: 'Performs a soft delete. User data remains in database.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'User unique identifier',
-    example: 'cm123abc456',
-  })
-  @ApiOkResponse({
-    description: 'User successfully deleted.',
-  })
-  @ApiNotFoundResponse({
-    description: 'User was not found.',
-  })
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
-  }
-
   @Patch(':id/status')
+  @Permissions(PERMISSIONS.USER_UPDATE.name)
   @ApiOperation({
     summary: 'Enable or disable user account',
-    description:
-      'Allows administrators to activate or deactivate a user account.',
+    description: 'Activates or deactivates a non-deleted user account.',
   })
   @ApiParam({
     name: 'id',
@@ -146,5 +134,27 @@ export class UsersController {
   })
   updateStatus(@Param('id') id: string, @Body() dto: UpdateUserStatusDto) {
     return this.usersService.updateStatus(id, dto.isActive);
+  }
+
+  @Delete(':id')
+  @Permissions(PERMISSIONS.USER_DELETE.name)
+  @ApiOperation({
+    summary: 'Delete user',
+    description: 'Performs a soft delete and disables the account.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User unique identifier',
+    example: 'cm123abc456',
+  })
+  @ApiOkResponse({
+    description: 'User successfully deleted.',
+    type: UserRoleResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User was not found.',
+  })
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(id);
   }
 }

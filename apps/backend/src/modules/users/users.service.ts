@@ -1,85 +1,93 @@
 import { Injectable } from '@nestjs/common';
 
+import { BusinessException, ErrorCode } from '../../common/exceptions';
 import { PrismaService } from '../../database';
+import { HashService, ROLES } from '../../security';
+import { CreateUserDto, UpdateUserDto } from './dto';
 
-import { BusinessException } from '../../common/exceptions/business.exception';
-
-import { ErrorCode } from '../../common/exceptions/error.codes';
-
-import { HashService } from '../../security';
-
-import { CreateUserDto } from './dto/create-user.dto';
-
-import { UpdateUserDto } from './dto/update-user.dto';
-
-const DEFAULT_ROLE = 'EMPLOYEE';
+const userSelect = {
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  isActive: true,
+  role: {
+    select: {
+      name: true,
+    },
+  },
+  createdAt: true,
+  updatedAt: true,
+} as const;
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
-
     private readonly hashService: HashService,
   ) {}
 
   async create(dto: CreateUserDto) {
-    const password = await this.hashService.hash(dto.password);
+    const existingUser = await this.prisma.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (existingUser) {
+      throw new BusinessException(
+        ErrorCode.USER_EMAIL_EXISTS,
+        'Email is already registered',
+        409,
+      );
+    }
 
     const defaultRole = await this.prisma.role.findUnique({
       where: {
-        name: DEFAULT_ROLE,
+        name: ROLES.EMPLOYEE,
+      },
+      select: {
+        id: true,
       },
     });
 
     if (!defaultRole) {
-      throw new Error(`Default role ${DEFAULT_ROLE} not found`);
+      throw new BusinessException(
+        ErrorCode.INTERNAL_ERROR,
+        `Default role ${ROLES.EMPLOYEE} was not found`,
+        500,
+      );
     }
+
+    const hashedPassword = await this.hashService.hash(dto.password);
 
     return this.prisma.user.create({
       data: {
         email: dto.email,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        password,
+        password: hashedPassword,
+        firstName: dto.firstName.trim(),
+        lastName: dto.lastName.trim(),
         role: {
           connect: {
             id: defaultRole.id,
           },
         },
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        role: {
-          select: {
-            name: true,
-          },
-        },
-        createdAt: true,
-      },
+      select: userSelect,
     });
   }
 
-  async findAll() {
+  findAll() {
     return this.prisma.user.findMany({
       where: {
         deletedAt: null,
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        role: {
-          select: {
-            name: true,
-          },
-        },
-        createdAt: true,
+      select: userSelect,
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   }
@@ -90,20 +98,7 @@ export class UsersService {
         id,
         deletedAt: null,
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        role: {
-          select: {
-            name: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: userSelect,
     });
 
     if (!user) {
@@ -117,12 +112,12 @@ export class UsersService {
     return user;
   }
 
-  async findByEmail(email: string) {
-    return this.prisma.user.findUnique({
+  findByEmail(email: string) {
+    return this.prisma.user.findFirst({
       where: {
-        email,
+        email: email.trim().toLowerCase(),
+        deletedAt: null,
       },
-
       include: {
         role: {
           include: {
@@ -140,24 +135,38 @@ export class UsersService {
   async update(id: string, dto: UpdateUserDto) {
     await this.findOne(id);
 
+    if (dto.email) {
+      const existingUser = await this.prisma.user.findFirst({
+        where: {
+          email: dto.email,
+          id: {
+            not: id,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (existingUser) {
+        throw new BusinessException(
+          ErrorCode.USER_EMAIL_EXISTS,
+          'Email is already registered',
+          409,
+        );
+      }
+    }
+
     return this.prisma.user.update({
       where: {
         id,
       },
-      data: dto,
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        role: {
-          select: {
-            name: true,
-          },
-        },
-        updatedAt: true,
+      data: {
+        email: dto.email,
+        firstName: dto.firstName?.trim(),
+        lastName: dto.lastName?.trim(),
       },
+      select: userSelect,
     });
   }
 
@@ -172,11 +181,13 @@ export class UsersService {
         deletedAt: new Date(),
         isActive: false,
       },
+      select: userSelect,
     });
   }
 
   async updateStatus(id: string, isActive: boolean) {
     await this.findOne(id);
+
     return this.prisma.user.update({
       where: {
         id,
@@ -184,14 +195,7 @@ export class UsersService {
       data: {
         isActive,
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        updatedAt: true,
-      },
+      select: userSelect,
     });
   }
 }
