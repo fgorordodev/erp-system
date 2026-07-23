@@ -1,12 +1,24 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config/dist/config.module';
+import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+
+import {
+  HttpExceptionFilter,
+  LoggerModule,
+  LoggingInterceptor,
+  PrismaExceptionFilter,
+  RequestIdMiddleware,
+  ResponseInterceptor,
+} from './common';
 import { validateEnv } from './config';
-import { LoggerModule, RequestIdMiddleware } from './common';
-import { HealthModule, UsersModule } from './modules';
 import { DatabaseModule } from './database';
-import { SecurityModule } from './security/security.module';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard, PermissionsGuard, RolesGuard } from './security';
+import { HealthModule, UsersModule } from './modules';
+import {
+  JwtAuthGuard,
+  PermissionsGuard,
+  RolesGuard,
+  SecurityModule,
+} from './security';
 
 @Module({
   imports: [
@@ -15,19 +27,33 @@ import { JwtAuthGuard, PermissionsGuard, RolesGuard } from './security';
       envFilePath: ['../../.env', '.env'],
       validate: validateEnv,
     }),
-    HealthModule,
-    DatabaseModule,
     LoggerModule,
-    UsersModule,
+    DatabaseModule,
     SecurityModule,
+    HealthModule,
+    UsersModule,
   ],
-  controllers: [],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: PrismaExceptionFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
@@ -39,7 +65,7 @@ import { JwtAuthGuard, PermissionsGuard, RolesGuard } from './security';
   ],
 })
 export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
+  configure(consumer: MiddlewareConsumer): void {
     consumer.apply(RequestIdMiddleware).forRoutes('{*path}');
   }
 }

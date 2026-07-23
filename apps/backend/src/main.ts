@@ -1,65 +1,53 @@
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ConfigService } from '@nestjs/config/dist/config.service';
-import {
-  HttpExceptionFilter,
-  LoggingInterceptor,
-  PrismaExceptionFilter,
-  ResponseInterceptor,
-} from './common';
 import { SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
 import helmet from 'helmet';
+
+import { AppModule } from './app.module';
 import { swaggerConfig } from './config';
-import { Logger } from '@nestjs/common';
 
-const logger = new Logger('Bootstrap');
-logger.log('ERP API starting...');
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create(AppModule);
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
-  });
-  app.setGlobalPrefix('api');
   const configService = app.get(ConfigService);
+  const logger = new Logger('Bootstrap');
 
-  app.enableCors({
-    origin: [
-      configService.getOrThrow<string>('NODE_ENV') == 'development'
-        ? configService.getOrThrow<string>('FRONTEND_URL')
-        : '*',
-    ],
-    credentials: true,
-  });
+  const port = configService.getOrThrow<number>('BACKEND_PORT');
+  const frontendUrl = configService.getOrThrow<string>('FRONTEND_URL');
+
+  app.setGlobalPrefix('api');
 
   app.use(helmet());
 
-  app.useGlobalInterceptors(
-    new LoggingInterceptor(),
-    new ResponseInterceptor(),
-  );
-  app.useGlobalFilters(new HttpExceptionFilter(), new PrismaExceptionFilter());
+  app.enableCors({
+    origin: frontendUrl,
+    credentials: true,
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
 
-  const swaggerConfigSettings = swaggerConfig();
+  const document = SwaggerModule.createDocument(app, swaggerConfig());
 
-  const swaggerDocument = SwaggerModule.createDocument(
-    app,
-    swaggerConfigSettings,
-  );
-
-  SwaggerModule.setup('docs', app, swaggerDocument);
-
-  const port = configService.getOrThrow<number>('BACKEND_PORT');
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
 
   await app.listen(port);
-  logger.log(`API running on port: ${port}`);
+
+  logger.log(`ERP API running at http://localhost:${port}/api`);
+  logger.log(`Swagger available at http://localhost:${port}/docs`);
 }
 
 void bootstrap();
