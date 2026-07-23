@@ -14,5 +14,7 @@ export function swaggerConfig() {
       'access-token',
     )
     .addTag('Health')
+    .addTag('Auth')
+    .addTag('Users')
     .build();
 }
