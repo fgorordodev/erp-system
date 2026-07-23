@@ -1,0 +1,20 @@
+{
+  "name": "erp-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ERP System",
+  "type": "module",
+  "packageManager": "pnpm@11.15.1",
+  "scripts": {
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "build": "pnpm -r build",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "author": "Fernando Gorordo",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
