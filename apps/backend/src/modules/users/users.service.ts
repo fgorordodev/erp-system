@@ -2,39 +2,62 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../database';
 
-import { PasswordService } from '../../common/security/password.service';
-
 import { BusinessException } from '../../common/exceptions/business.exception';
 
 import { ErrorCode } from '../../common/exceptions/error.codes';
 
+import { HashService } from '../../security';
+
 import { CreateUserDto } from './dto/create-user.dto';
 
 import { UpdateUserDto } from './dto/update-user.dto';
+
+const DEFAULT_ROLE = 'EMPLOYEE';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
 
-    private readonly passwordService: PasswordService,
+    private readonly hashService: HashService,
   ) {}
 
   async create(dto: CreateUserDto) {
-    const password = await this.passwordService.hash(dto.password);
+    const password = await this.hashService.hash(dto.password);
+
+    const defaultRole = await this.prisma.role.findUnique({
+      where: {
+        name: DEFAULT_ROLE,
+      },
+    });
+
+    if (!defaultRole) {
+      throw new Error(`Default role ${DEFAULT_ROLE} not found`);
+    }
 
     return this.prisma.user.create({
       data: {
-        ...dto,
+        email: dto.email,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
         password,
+        role: {
+          connect: {
+            id: defaultRole.id,
+          },
+        },
       },
-
       select: {
         id: true,
         email: true,
         firstName: true,
         lastName: true,
         isActive: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
         createdAt: true,
       },
     });
@@ -45,13 +68,17 @@ export class UsersService {
       where: {
         deletedAt: null,
       },
-
       select: {
         id: true,
         email: true,
         firstName: true,
         lastName: true,
         isActive: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
         createdAt: true,
       },
     });
@@ -62,6 +89,20 @@ export class UsersService {
       where: {
         id,
         deletedAt: null,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        isActive: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
@@ -81,6 +122,18 @@ export class UsersService {
       where: {
         email,
       },
+
+      include: {
+        role: {
+          include: {
+            permissions: {
+              include: {
+                permission: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -91,15 +144,18 @@ export class UsersService {
       where: {
         id,
       },
-
       data: dto,
-
       select: {
         id: true,
         email: true,
         firstName: true,
         lastName: true,
         isActive: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
         updatedAt: true,
       },
     });
@@ -112,10 +168,8 @@ export class UsersService {
       where: {
         id,
       },
-
       data: {
         deletedAt: new Date(),
-
         isActive: false,
       },
     });
@@ -123,16 +177,13 @@ export class UsersService {
 
   async updateStatus(id: string, isActive: boolean) {
     await this.findOne(id);
-
     return this.prisma.user.update({
       where: {
         id,
       },
-
       data: {
         isActive,
       },
-
       select: {
         id: true,
         email: true,

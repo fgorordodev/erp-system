@@ -1,9 +1,12 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { validateEnv } from './config';
-import { LoggerModule, RequestIdMiddleware, SecurityModule } from './common';
+import { LoggerModule, RequestIdMiddleware } from './common';
 import { HealthModule, UsersModule } from './modules';
 import { DatabaseModule } from './database';
+import { SecurityModule } from './security/security.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard, PermissionsGuard, RolesGuard } from './security';
 
 @Module({
   imports: [
@@ -19,7 +22,21 @@ import { DatabaseModule } from './database';
     SecurityModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
-export class PasswordService {
+export class HashService {
   private readonly saltRounds = 12;
 
   async hash(password: string): Promise<string> {
