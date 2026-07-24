@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { BusinessException, ErrorCode } from '../../common/exceptions';
 import { HashService } from '../../security';
-import { UsersService } from '../users';
+import { UserAuthEntity, UsersService } from '../users';
 import { LoginDto } from './dto';
 import { AUTH_ERROR_MESSAGES } from './constants';
 import { UserMapper } from '../users/mappers';
@@ -21,7 +21,7 @@ export class AuthService {
     return UserMapper.toResponse(user);
   }
 
-  private async validateCredentials(dto: LoginDto) {
+  private async validateCredentials(dto: LoginDto): Promise<UserAuthEntity> {
     const user = await this.usersService.findByEmail(dto.email);
 
     if (!user) {

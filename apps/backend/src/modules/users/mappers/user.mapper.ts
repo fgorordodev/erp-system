@@ -1,17 +1,7 @@
 import { UserResponseDto } from '../dto';
+import { UserAuthEntity, UserResponseEntity } from '../users.types';
 
-interface UserMapperInput {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  role: {
-    name: string;
-  };
-}
+type UserMapperInput = UserResponseEntity | UserAuthEntity;
 
 export class UserMapper {
   static toResponse(user: UserMapperInput): UserResponseDto {
