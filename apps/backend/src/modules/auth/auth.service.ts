@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 
 import { BusinessException, ErrorCode } from '../../common/exceptions';
 import { HashService } from '../../security';
-import { UserAuthEntity, UsersService } from '../users';
+import { UsersService } from '../users';
 import { LoginDto } from './dto';
 import { AUTH_ERROR_MESSAGES } from './constants';
 import { UserMapper } from '../users/mappers';
 import { UserResponseDto } from '../users/dto';
+import { UserAuthProjection } from '../users/persistence';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +22,9 @@ export class AuthService {
     return UserMapper.toResponse(user);
   }
 
-  private async validateCredentials(dto: LoginDto): Promise<UserAuthEntity> {
+  private async validateCredentials(
+    dto: LoginDto,
+  ): Promise<UserAuthProjection> {
     const user = await this.usersService.findByEmail(dto.email);
 
     if (!user) {

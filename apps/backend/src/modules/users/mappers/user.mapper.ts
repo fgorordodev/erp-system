@@ -1,7 +1,7 @@
 import { UserResponseDto } from '../dto';
-import { UserAuthEntity, UserResponseEntity } from '../users.types';
+import { UserAuthProjection, UserResponseProjection } from '../persistence';
 
-type UserMapperInput = UserResponseEntity | UserAuthEntity;
+type UserMapperInput = UserResponseProjection | UserAuthProjection;
 
 export class UserMapper {
   static toResponse(user: UserMapperInput): UserResponseDto {

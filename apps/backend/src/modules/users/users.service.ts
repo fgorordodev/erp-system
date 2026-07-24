@@ -4,8 +4,8 @@ import { BusinessException, ErrorCode } from '../../common/exceptions';
 import { PrismaService } from '../../database';
 import { HashService, ROLES } from '../../security';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { USER_AUTH_SELECT, USER_RESPONSE_SELECT } from './users.select';
-import { UserAuthEntity, UserResponseEntity } from './users.types';
+import { USER_AUTH_SELECT, USER_RESPONSE_SELECT } from './persistence';
+import { UserAuthProjection, UserResponseProjection } from './persistence';
 
 @Injectable()
 export class UsersService {
@@ -14,7 +14,7 @@ export class UsersService {
     private readonly hashService: HashService,
   ) {}
 
-  async create(dto: CreateUserDto): Promise<UserResponseEntity> {
+  async create(dto: CreateUserDto): Promise<UserResponseProjection> {
     const existingUser = await this.prisma.user.findUnique({
       where: {
         email: dto.email,
@@ -67,7 +67,7 @@ export class UsersService {
     });
   }
 
-  findAll(): Promise<UserResponseEntity[]> {
+  findAll(): Promise<UserResponseProjection[]> {
     return this.prisma.user.findMany({
       where: {
         deletedAt: null,
@@ -79,7 +79,7 @@ export class UsersService {
     });
   }
 
-  async findOne(id: string): Promise<UserResponseEntity> {
+  async findOne(id: string): Promise<UserResponseProjection> {
     const user = await this.prisma.user.findFirst({
       where: {
         id,
@@ -99,7 +99,7 @@ export class UsersService {
     return user;
   }
 
-  findByEmail(email: string): Promise<UserAuthEntity | null> {
+  findByEmail(email: string): Promise<UserAuthProjection | null> {
     return this.prisma.user.findFirst({
       where: {
         email: email.trim().toLowerCase(),
@@ -109,7 +109,10 @@ export class UsersService {
     });
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<UserResponseEntity> {
+  async update(
+    id: string,
+    dto: UpdateUserDto,
+  ): Promise<UserResponseProjection> {
     await this.findOne(id);
 
     if (dto.email) {
@@ -153,7 +156,7 @@ export class UsersService {
     });
   }
 
-  async remove(id: string): Promise<UserResponseEntity> {
+  async remove(id: string): Promise<UserResponseProjection> {
     await this.findOne(id);
 
     return this.prisma.user.update({
@@ -171,7 +174,7 @@ export class UsersService {
   async updateStatus(
     id: string,
     isActive: boolean,
-  ): Promise<UserResponseEntity> {
+  ): Promise<UserResponseProjection> {
     await this.findOne(id);
 
     return this.prisma.user.update({
