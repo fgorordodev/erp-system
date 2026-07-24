@@ -1,3 +1,4 @@
 export * from './jwt.module';
 export * from './jwt.service';
-export * from './jwt.strategy';
+export * from '../../modules/auth/strategies/jwt.strategy';
+export * from './interfaces';

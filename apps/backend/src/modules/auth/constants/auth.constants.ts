@@ -1,7 +1,3 @@
-export const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 15 * 60;
-
-export const REFRESH_TOKEN_BYTES = 64;
-
 export const AUTH_ERROR_MESSAGES = {
   INVALID_CREDENTIALS: 'Invalid email or password',
   INVALID_REFRESH_TOKEN: 'Invalid or expired refresh token',
@@ -11,4 +7,13 @@ export const AUTH_ERROR_MESSAGES = {
   CURRENT_PASSWORD_INVALID: 'Current password is invalid',
   PASSWORDS_MUST_DIFFER:
     'New password must be different from the current password',
+} as const;
+
+export const AUTH_SESSION_DURATION = {
+  DEFAULT_DAYS: 7,
+  REMEMBER_ME_DAYS: 30,
+} as const;
+
+export const AUTH_TOKEN_CONFIG = {
+  REFRESH_TOKEN_BYTES: 64,
 } as const;

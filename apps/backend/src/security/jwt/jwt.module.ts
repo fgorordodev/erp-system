@@ -1,42 +1,30 @@
 import { Module } from '@nestjs/common';
-
-import { JwtModule } from '@nestjs/jwt';
-
 import { ConfigModule, ConfigService } from '@nestjs/config';
-
+import { JwtModule, type JwtSignOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
-import { DatabaseModule } from '../../database';
-
 import { JwtService } from './jwt.service';
-
-import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
     ConfigModule,
-
-    DatabaseModule,
-
-    PassportModule,
-
+    PassportModule.register({
+      defaultStrategy: 'jwt',
+    }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-
       inject: [ConfigService],
-
-      useFactory: (config: ConfigService) => ({
-        secret: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
-
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: config.getOrThrow<'15m' | '1h'>('JWT_ACCESS_EXPIRES'),
+          expiresIn: configService.getOrThrow<string>(
+            'JWT_ACCESS_EXPIRES',
+          ) as JwtSignOptions['expiresIn'],
         },
       }),
     }),
   ],
-
-  providers: [JwtService, JwtStrategy],
-
-  exports: [JwtService, JwtModule],
+  providers: [JwtService],
+  exports: [JwtService, JwtModule, PassportModule],
 })
 export class SecurityJwtModule {}
