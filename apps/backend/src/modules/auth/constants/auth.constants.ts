@@ -8,3 +8,12 @@ export const AUTH_ERROR_MESSAGES = {
   PASSWORDS_MUST_DIFFER:
     'New password must be different from the current password',
 } as const;
+
+export const AUTH_SESSION_DURATION = {
+  DEFAULT_DAYS: 7,
+  REMEMBER_ME_DAYS: 30,
+} as const;
+
+export const AUTH_TOKEN_CONFIG = {
+  REFRESH_TOKEN_BYTES: 64,
+} as const;

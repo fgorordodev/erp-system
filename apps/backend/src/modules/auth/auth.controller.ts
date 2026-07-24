@@ -3,8 +3,9 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { Public } from '../../security';
 import { AuthService } from './auth.service';
+import { CurrentSessionMetadata } from './decorators';
 import { LoginDto } from './dto';
-import { UserResponseDto } from '../users/dto';
+import { LoginResponse, type SessionMetadata } from './interfaces';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -17,9 +18,12 @@ export class AuthController {
     summary: 'Authenticate a user',
   })
   @ApiOkResponse({
-    type: UserResponseDto,
+    description: 'User authenticated successfully',
   })
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  login(
+    @Body() dto: LoginDto,
+    @CurrentSessionMetadata() metadata: SessionMetadata,
+  ): Promise<LoginResponse> {
+    return this.authService.login(dto, metadata);
   }
 }
