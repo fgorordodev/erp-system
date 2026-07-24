@@ -18,7 +18,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { Permissions, PERMISSIONS } from '../../security';
+import {
+  type AuthenticatedUser,
+  CurrentUser,
+  Permissions,
+} from '../../security';
 import {
   CreateUserDto,
   UpdateUserDto,
@@ -27,6 +31,8 @@ import {
   UserRoleResponseDto,
 } from './dto';
 import { UsersService } from './users.service';
+
+import { PERMISSIONS } from '../../security';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
@@ -64,6 +70,22 @@ export class UsersController {
   })
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @Get('me')
+  @ApiOperation({
+    summary: 'Get current user',
+    description: 'Returns the currently authenticated user.',
+  })
+  @ApiOkResponse({
+    description: 'Current authenticated user.',
+    type: UserResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Authenticated user was not found.',
+  })
+  findMe(@CurrentUser() user: AuthenticatedUser) {
+    return this.usersService.findOne(user.userId);
   }
 
   @Get(':id')

@@ -4,21 +4,8 @@ import { BusinessException, ErrorCode } from '../../common/exceptions';
 import { PrismaService } from '../../database';
 import { HashService, ROLES } from '../../security';
 import { CreateUserDto, UpdateUserDto } from './dto';
-
-const userSelect = {
-  id: true,
-  email: true,
-  firstName: true,
-  lastName: true,
-  isActive: true,
-  role: {
-    select: {
-      name: true,
-    },
-  },
-  createdAt: true,
-  updatedAt: true,
-} as const;
+import { USER_AUTH_SELECT, USER_RESPONSE_SELECT } from './persistence';
+import { UserAuthProjection, UserResponseProjection } from './persistence';
 
 @Injectable()
 export class UsersService {
@@ -27,7 +14,7 @@ export class UsersService {
     private readonly hashService: HashService,
   ) {}
 
-  async create(dto: CreateUserDto) {
+  async create(dto: CreateUserDto): Promise<UserResponseProjection> {
     const existingUser = await this.prisma.user.findUnique({
       where: {
         email: dto.email,
@@ -76,29 +63,29 @@ export class UsersService {
           },
         },
       },
-      select: userSelect,
+      select: USER_RESPONSE_SELECT,
     });
   }
 
-  findAll() {
+  findAll(): Promise<UserResponseProjection[]> {
     return this.prisma.user.findMany({
       where: {
         deletedAt: null,
       },
-      select: userSelect,
+      select: USER_RESPONSE_SELECT,
       orderBy: {
         createdAt: 'desc',
       },
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<UserResponseProjection> {
     const user = await this.prisma.user.findFirst({
       where: {
         id,
         deletedAt: null,
       },
-      select: userSelect,
+      select: USER_RESPONSE_SELECT,
     });
 
     if (!user) {
@@ -112,27 +99,20 @@ export class UsersService {
     return user;
   }
 
-  findByEmail(email: string) {
+  findByEmail(email: string): Promise<UserAuthProjection | null> {
     return this.prisma.user.findFirst({
       where: {
         email: email.trim().toLowerCase(),
         deletedAt: null,
       },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: {
-                permission: true,
-              },
-            },
-          },
-        },
-      },
+      select: USER_AUTH_SELECT,
     });
   }
 
-  async update(id: string, dto: UpdateUserDto) {
+  async update(
+    id: string,
+    dto: UpdateUserDto,
+  ): Promise<UserResponseProjection> {
     await this.findOne(id);
 
     if (dto.email) {
@@ -162,15 +142,21 @@ export class UsersService {
         id,
       },
       data: {
-        email: dto.email,
-        firstName: dto.firstName?.trim(),
-        lastName: dto.lastName?.trim(),
+        ...(dto.email !== undefined && {
+          email: dto.email,
+        }),
+        ...(dto.firstName !== undefined && {
+          firstName: dto.firstName.trim(),
+        }),
+        ...(dto.lastName !== undefined && {
+          lastName: dto.lastName.trim(),
+        }),
       },
-      select: userSelect,
+      select: USER_RESPONSE_SELECT,
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<UserResponseProjection> {
     await this.findOne(id);
 
     return this.prisma.user.update({
@@ -181,11 +167,14 @@ export class UsersService {
         deletedAt: new Date(),
         isActive: false,
       },
-      select: userSelect,
+      select: USER_RESPONSE_SELECT,
     });
   }
 
-  async updateStatus(id: string, isActive: boolean) {
+  async updateStatus(
+    id: string,
+    isActive: boolean,
+  ): Promise<UserResponseProjection> {
     await this.findOne(id);
 
     return this.prisma.user.update({
@@ -195,7 +184,17 @@ export class UsersService {
       data: {
         isActive,
       },
-      select: userSelect,
+      select: USER_RESPONSE_SELECT,
+    });
+  }
+
+  findById(id: string): Promise<UserResponseProjection | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      select: USER_RESPONSE_SELECT,
     });
   }
 }

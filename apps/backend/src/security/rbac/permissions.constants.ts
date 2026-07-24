@@ -1,26 +1,18 @@
 export const PERMISSIONS = {
   USER_CREATE: {
-    name: 'USER_CREATE',
-    description: 'Create system users',
+    name: 'user:create',
+    description: 'Create users',
   },
-
   USER_READ: {
-    name: 'USER_READ',
-    description: 'View system users',
+    name: 'user:read',
+    description: 'Read users',
   },
-
   USER_UPDATE: {
-    name: 'USER_UPDATE',
-    description: 'Update system users',
+    name: 'user:update',
+    description: 'Update users',
   },
-
   USER_DELETE: {
-    name: 'USER_DELETE',
-    description: 'Delete system users',
-  },
-
-  ROLE_MANAGE: {
-    name: 'ROLE_MANAGE',
-    description: 'Manage roles and permissions',
+    name: 'user:delete',
+    description: 'Delete users',
   },
 } as const;

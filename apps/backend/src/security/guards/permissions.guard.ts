@@ -1,24 +1,23 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
-import { IS_PUBLIC_KEY } from '../decorator/public.decorator';
-import { PERMISSIONS_KEY } from '../decorator/permissions.decorator';
-import { AuthUser } from '../interfaces';
+import type { AuthenticatedUser } from '../jwt/interfaces';
+import { PERMISSIONS_KEY } from '../decorator';
+
+interface AuthenticatedRequest extends Request {
+  user?: AuthenticatedUser;
+}
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-
-    if (isPublic) {
-      return true;
-    }
-
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -28,17 +27,20 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<{
-      user?: AuthUser;
-    }>();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
-    const user = request.user;
+    const userPermissions = request.user?.permissions ?? [];
 
-    return Boolean(
-      user &&
-      requiredPermissions.every((permission) =>
-        user.permissions.includes(permission),
-      ),
+    const hasEveryPermission = requiredPermissions.every((permission) =>
+      userPermissions.includes(permission),
     );
+
+    if (!hasEveryPermission) {
+      throw new ForbiddenException(
+        'You do not have permission to perform this action',
+      );
+    }
+
+    return true;
   }
 }
