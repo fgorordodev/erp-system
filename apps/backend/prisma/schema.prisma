@@ -19,7 +19,7 @@ model User {
   password String
 
   firstName String
-  lastName String
+  lastName  String
 
   roleId String
 
@@ -27,9 +27,10 @@ model User {
 
   createdAt DateTime @default(now())
 
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  isActive Boolean @default(true)
+  isActive  Boolean   @default(true)
+  sessions  Session[]
 }
 
 model Role {
@@ -46,8 +47,8 @@ model Role {
   createdAt DateTime @default(now())
 
   updatedAt DateTime @updatedAt
-  
-  isSystem  Boolean  @default(false)
+
+  isSystem Boolean @default(false)
 }
 
 model Permission {
@@ -74,4 +75,23 @@ model RolePermission {
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
+}
+
+model Session {
+  id               String    @id @default(cuid())
+  userId           String
+  refreshTokenHash String    @unique
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  lastUsedAt       DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
 }
