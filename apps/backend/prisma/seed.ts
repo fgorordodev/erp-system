@@ -1,17 +1,17 @@
 import { PrismaClient } from '@prisma/client';
-
-import { PERMISSIONS, ROLE_DEFINITIONS } from '../src/security';
-
 import { PrismaPg } from '@prisma/adapter-pg';
-
 import { config } from 'dotenv';
-
 import { resolve } from 'node:path';
-
 import { env } from 'prisma/config';
+import {
+  HashService,
+  PERMISSIONS,
+  ROLE_DEFINITIONS,
+  ROLES,
+} from '../src/security';
 
 config({
-  path: resolve(__dirname, '../../.env'),
+  path: resolve(__dirname, '../../../.env'),
 });
 
 const adapter = new PrismaPg({
@@ -21,6 +21,8 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({
   adapter,
 });
+
+const hashService = new HashService();
 
 async function seedPermissions() {
   for (const permission of Object.values(PERMISSIONS)) {
@@ -93,6 +95,53 @@ async function seedRoles() {
   }
 }
 
+async function seedAdminUser(): Promise<void> {
+  const email = env('SEED_ADMIN_EMAIL').trim().toLowerCase();
+  const password = env('SEED_ADMIN_PASSWORD');
+  const firstName = env('SEED_ADMIN_FIRST_NAME');
+  const lastName = env('SEED_ADMIN_LAST_NAME');
+
+  const adminRole = await prisma.role.findUnique({
+    where: {
+      name: ROLES.ADMIN,
+    },
+  });
+
+  if (!adminRole) {
+    throw new Error(
+      `Role ${ROLES.ADMIN} is missing. Run seedRoles before seedAdminUser.`,
+    );
+  }
+
+  const passwordHash = await hashService.hash(password);
+
+  await prisma.user.upsert({
+    where: {
+      email,
+    },
+
+    update: {
+      firstName,
+      lastName,
+      password: passwordHash,
+      roleId: adminRole.id,
+      isActive: true,
+      deletedAt: null,
+    },
+
+    create: {
+      email,
+      password: passwordHash,
+      firstName,
+      lastName,
+      roleId: adminRole.id,
+      isActive: true,
+    },
+  });
+
+  console.log(`👤 Administrator ready: ${email}`);
+}
+
 async function main() {
   console.log('🌱 Starting seed');
 
@@ -100,12 +149,16 @@ async function main() {
 
   await seedRoles();
 
+  await seedAdminUser();
+
   console.log('✅ Seed completed');
 }
 
 main()
-  .catch(console.error)
-
+  .catch((error: unknown) => {
+    console.error('❌ Seed failed', error);
+    process.exitCode = 1;
+  })
   .finally(async () => {
     await prisma.$disconnect();
   });
