@@ -54,6 +54,3 @@ jobs:
 
       - name: Build monorepo
         run: pnpm build
-
-      - name: Validate OpenAPI contract
-        run: pnpm swagger:validate

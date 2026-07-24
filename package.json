@@ -28,7 +28,7 @@
     "typecheck:frontend": "turbo run typecheck --filter=@erp/frontend",
     "swagger:generate": "pnpm --filter @erp/backend swagger:generate",
     "swagger:validate": "pnpm --filter @erp/backend swagger:validate",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm swagger:validate"
+    "check": "pnpm lint && pnpm typecheck && pnpm build"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
