@@ -12,7 +12,7 @@ import {
 } from './common';
 import { validateEnv } from './config';
 import { DatabaseModule } from './database';
-import { HealthModule, UsersModule } from './modules';
+import { AuthModule, HealthModule, UsersModule } from './modules';
 import {
   JwtAuthGuard,
   PermissionsGuard,
@@ -32,6 +32,7 @@ import {
     SecurityModule,
     HealthModule,
     UsersModule,
+    AuthModule,
   ],
   providers: [
     {
