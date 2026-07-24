@@ -19,4 +19,10 @@ export const SESSION_VALIDATION_SELECT = {
   refreshTokenHash: true,
   expiresAt: true,
   revokedAt: true,
+  user: {
+    select: {
+      isActive: true,
+      deletedAt: true,
+    },
+  },
 } satisfies Prisma.SessionSelect;

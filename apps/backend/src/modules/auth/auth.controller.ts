@@ -3,8 +3,8 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { Public } from '../../security';
 import { CurrentSessionMetadata } from './decorators';
-import { LoginDto } from './dto';
-import { LoginResponse, type SessionMetadata } from './interfaces';
+import { LoginDto, RefreshDto } from './dto';
+import { LoginResponse, TokenPair, type SessionMetadata } from './interfaces';
 import { AuthenticationService } from './services';
 
 @ApiTags('Auth')
@@ -25,5 +25,17 @@ export class AuthController {
     @CurrentSessionMetadata() metadata: SessionMetadata,
   ): Promise<LoginResponse> {
     return this.authenticationService.login(dto, metadata);
+  }
+
+  @Public()
+  @Post('refresh')
+  @ApiOperation({
+    summary: 'Rotate refresh token and issue a new token pair',
+  })
+  @ApiOkResponse({
+    description: 'Tokens refreshed successfully',
+  })
+  refresh(@Body() dto: RefreshDto): Promise<TokenPair> {
+    return this.authenticationService.refresh(dto);
   }
 }

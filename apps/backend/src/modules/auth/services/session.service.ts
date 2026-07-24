@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../database';
-import { CreateSessionInput } from '../interfaces';
+import { CreateSessionInput, RotateSessionTokenInput } from '../interfaces';
 import {
   SESSION_SELECT,
   SESSION_VALIDATION_SELECT,
@@ -71,5 +71,35 @@ export class SessionService {
       },
       select: SESSION_SELECT,
     });
+  }
+
+  findByRefreshTokenHash(
+    refreshTokenHash: string,
+  ): Promise<SessionValidationProjection | null> {
+    return this.prisma.session.findUnique({
+      where: {
+        refreshTokenHash,
+      },
+      select: SESSION_VALIDATION_SELECT,
+    });
+  }
+
+  async rotateRefreshToken(input: RotateSessionTokenInput): Promise<boolean> {
+    const result = await this.prisma.session.updateMany({
+      where: {
+        id: input.sessionId,
+        refreshTokenHash: input.currentRefreshTokenHash,
+        revokedAt: null,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+      data: {
+        refreshTokenHash: input.newRefreshTokenHash,
+        lastUsedAt: new Date(),
+      },
+    });
+
+    return result.count === 1;
   }
 }
