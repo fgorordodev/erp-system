@@ -1,25 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import ms, { StringValue } from 'ms';
+import ms from 'ms';
+import type { StringValue } from 'ms';
 
-import { BusinessException, ErrorCode } from '../../common/exceptions';
-import { HashService, JwtService, TokenService } from '../../security';
-import { UserMapper } from '../users/mappers';
-import { UserAuthProjection } from '../users/persistence';
-import { UsersService } from '../users';
-import {
-  AUTH_ERROR_MESSAGES,
-  AUTH_SESSION_DURATION,
-  AUTH_TOKEN_CONFIG,
-} from './constants';
-import { LoginDto } from './dto';
-import { LoginResponse, SessionMetadata } from './interfaces';
-import { SessionService } from './services';
+import { HashService, JwtService, TokenService } from '../../../security';
+import { UserMapper } from '../../users';
+import { AUTH_SESSION_DURATION, AUTH_TOKEN_CONFIG } from '../constants';
+import { LoginDto } from '../dto';
+import { LoginResponse, SessionMetadata } from '../interfaces';
+import { CredentialsService } from './credentials.service';
+import { SessionService } from './session.service';
 
 @Injectable()
-export class AuthService {
+export class AuthenticationService {
   constructor(
-    private readonly usersService: UsersService,
+    private readonly credentialsService: CredentialsService,
     private readonly sessionService: SessionService,
     private readonly hashService: HashService,
     private readonly tokenService: TokenService,
@@ -31,7 +26,10 @@ export class AuthService {
     dto: LoginDto,
     metadata: SessionMetadata,
   ): Promise<LoginResponse> {
-    const user = await this.validateCredentials(dto);
+    const user = await this.credentialsService.validate(
+      dto.email,
+      dto.password,
+    );
 
     const refreshToken = this.tokenService.generate(
       AUTH_TOKEN_CONFIG.REFRESH_TOKEN_BYTES,
@@ -55,30 +53,9 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      expiresIn: this.getAccessTokenExpiresInSeconds(),
+      expiresIn: this.getAccessTokenExpirationSeconds(),
       user: UserMapper.toResponse(user),
     };
-  }
-
-  private async validateCredentials(
-    dto: LoginDto,
-  ): Promise<UserAuthProjection> {
-    const user = await this.usersService.findByEmail(dto.email);
-
-    if (!user) {
-      throw this.invalidCredentialsException();
-    }
-
-    const passwordMatches = await this.hashService.compare(
-      dto.password,
-      user.password,
-    );
-
-    if (!passwordMatches || !user.isActive) {
-      throw this.invalidCredentialsException();
-    }
-
-    return user;
   }
 
   private getSessionExpiration(rememberMe: boolean): Date {
@@ -93,18 +70,10 @@ export class AuthService {
     return expiresAt;
   }
 
-  private getAccessTokenExpiresInSeconds(): number {
+  private getAccessTokenExpirationSeconds(): number {
     const duration =
       this.configService.getOrThrow<StringValue>('JWT_ACCESS_EXPIRES');
 
     return Math.floor(ms(duration) / 1000);
-  }
-
-  private invalidCredentialsException(): BusinessException {
-    return new BusinessException(
-      ErrorCode.INVALID_CREDENTIALS,
-      AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS,
-      401,
-    );
   }
 }
