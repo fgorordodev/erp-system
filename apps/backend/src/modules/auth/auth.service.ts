@@ -5,6 +5,8 @@ import { HashService } from '../../security';
 import { UsersService } from '../users';
 import { LoginDto } from './dto';
 import { AUTH_ERROR_MESSAGES } from './constants';
+import { UserMapper } from '../users/mappers';
+import { UserResponseDto } from '../users/dto';
 
 @Injectable()
 export class AuthService {
@@ -13,19 +15,10 @@ export class AuthService {
     private readonly hashService: HashService,
   ) {}
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto): Promise<UserResponseDto> {
     const user = await this.validateCredentials(dto);
 
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      isActive: user.isActive,
-      role: {
-        name: user.role.name,
-      },
-    };
+    return UserMapper.toResponse(user);
   }
 
   private async validateCredentials(dto: LoginDto) {

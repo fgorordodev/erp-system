@@ -1,10 +1,31 @@
 {
   "info": {
-    "_postman_id": "b3f3f5dd-4f35-4e7f-a4f7-erp-system-api",
+    "_postman_id": "6d7f0d7c-erp-system",
     "name": "ERP System API",
-    "description": "Postman collection for the ERP System NestJS API. Current routes: health, authentication login, and users CRUD.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@erp.local"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Admin123!"
+    }
+  ],
   "auth": {
     "type": "bearer",
     "bearer": [
@@ -15,189 +36,59 @@
       }
     ]
   },
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000/api",
-      "type": "string"
-    },
-    {
-      "key": "accessToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "userId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "adminEmail",
-      "value": "admin@erp.local",
-      "type": "string"
-    },
-    {
-      "key": "adminPassword",
-      "value": "Admin123!",
-      "type": "string"
-    },
-    {
-      "key": "testUserEmail",
-      "value": "postman.user@erp.local",
-      "type": "string"
-    },
-    {
-      "key": "testUserPassword",
-      "value": "Password123!",
-      "type": "string"
-    }
-  ],
   "item": [
     {
       "name": "Health",
+      "auth": {
+        "type": "noauth"
+      },
       "item": [
         {
-          "name": "Health check",
+          "name": "Health Check",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/health",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "health"
-              ]
-            },
-            "description": "Health check",
-            "auth": {
-              "type": "noauth"
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
-                  "pm.test(\"Response is JSON\", function () { pm.response.to.be.json; });"
-                ]
-              }
-            }
-          ]
+            "url": "{{baseUrl}}/health"
+          }
         }
       ]
     },
     {
       "name": "Auth",
-      "description": "Authentication endpoints. Login is included for the current AuthModule implementation.",
+      "auth": {
+        "type": "noauth"
+      },
       "item": [
         {
-          "name": "Login with valid credentials",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            },
-            "description": "Login with valid credentials",
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"rememberMe\": false\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [],
+          "name": "Login",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is successful\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
-                  "const json = pm.response.json();",
-                  "const data = json.data ?? json;",
-                  "if (data.accessToken) { pm.collectionVariables.set(\"accessToken\", data.accessToken); }",
-                  "if (data.user?.id) { pm.collectionVariables.set(\"userId\", data.user.id); }",
-                  "if (data.id) { pm.collectionVariables.set(\"userId\", data.id); }"
+                  "if(pm.response.code===200){",
+                  "const r=pm.response.json();",
+                  "const t=r?.data?.accessToken||r?.accessToken;",
+                  "if(t) pm.collectionVariables.set('accessToken',t);",
+                  "]}"
                 ]
               }
             }
-          ]
-        },
-        {
-          "name": "Reject invalid credentials",
+          ],
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
+                "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            },
-            "description": "Reject invalid credentials",
-            "auth": {
-              "type": "noauth"
-            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"unknown@erp.local\",\n  \"password\": \"IncorrectPassword\",\n  \"rememberMe\": false\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 401\", function () { pm.response.to.have.status(401); });",
-                  "const json = pm.response.json();",
-                  "const error = json.error ?? json;",
-                  "pm.test(\"Uses generic credential error\", function () { pm.expect(error.code).to.eql(\"INVALID_CREDENTIALS\"); });"
-                ]
-              }
-            }
-          ]
+              "raw": "{\n  \"email\":\"{{adminEmail}}\",\n  \"password\":\"{{adminPassword}}\",\n  \"rememberMe\":false\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
         }
       ]
     },
@@ -205,278 +96,59 @@
       "name": "Users",
       "item": [
         {
-          "name": "Create user",
+          "name": "Create User",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
+                "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/users",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users"
-              ]
-            },
-            "description": "Create user",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{testUserEmail}}\",\n  \"password\": \"{{testUserPassword}}\",\n  \"firstName\": \"Postman\",\n  \"lastName\": \"User\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
-                  "const json = pm.response.json();",
-                  "const data = json.data ?? json;",
-                  "if (data.id) { pm.collectionVariables.set(\"userId\", data.id); }"
-                ]
-              }
-            }
-          ]
+              "raw": "{\n  \"email\":\"john@example.com\",\n  \"password\":\"Password123!\",\n  \"firstName\":\"John\",\n  \"lastName\":\"Doe\",\n  \"roleId\":\"<ROLE_ID>\"\n}"
+            },
+            "url": "{{baseUrl}}/users"
+          }
         },
         {
-          "name": "Get all users",
+          "name": "Get Users",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users"
-              ]
-            },
-            "description": "Get all users"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
-                  "pm.test(\"Response contains a list\", function () { const json = pm.response.json(); const data = json.data ?? json; pm.expect(data).to.be.an(\"array\"); });"
-                ]
-              }
-            }
-          ]
+            "url": "{{baseUrl}}/users"
+          }
         },
         {
-          "name": "Get user by ID",
+          "name": "Get User By Id",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}"
-              ]
-            },
-            "description": "Get user by ID"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            "url": "{{baseUrl}}/users/{{userId}}"
+          }
         },
         {
-          "name": "Update user profile",
+          "name": "Update User",
           "request": {
             "method": "PATCH",
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
+                "value": "application/json"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}"
-              ]
-            },
-            "description": "Update user profile",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"Postman User\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Disable user",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}",
-                "status"
-              ]
+              "raw": "{\n  \"firstName\":\"Updated\"\n}"
             },
-            "description": "Disable user",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"isActive\": false\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            "url": "{{baseUrl}}/users/{{userId}}"
+          }
         },
         {
-          "name": "Enable user",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}",
-                "status"
-              ]
-            },
-            "description": "Enable user",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"isActive\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Soft-delete user",
+          "name": "Delete User",
           "request": {
             "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}"
-              ]
-            },
-            "description": "Soft-delete user"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            "url": "{{baseUrl}}/users/{{userId}}"
+          }
         }
       ]
     }
