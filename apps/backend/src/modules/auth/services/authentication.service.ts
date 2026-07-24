@@ -136,4 +136,8 @@ export class AuthenticationService {
       401,
     );
   }
+
+  async logout(sessionId: string): Promise<void> {
+    await this.sessionService.revokeById(sessionId);
+  }
 }

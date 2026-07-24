@@ -187,4 +187,14 @@ export class UsersService {
       select: USER_RESPONSE_SELECT,
     });
   }
+
+  findById(id: string): Promise<UserResponseProjection | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      select: USER_RESPONSE_SELECT,
+    });
+  }
 }

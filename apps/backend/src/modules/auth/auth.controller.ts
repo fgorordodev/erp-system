@@ -1,7 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { ApiNoContentResponse, ApiTags } from '@nestjs/swagger';
 
-import { Public } from '../../security';
+import { type AuthenticatedUser, CurrentUser, Public } from '../../security';
 import { CurrentSessionMetadata } from './decorators';
 import { LoginDto, RefreshDto } from './dto';
 import { LoginResponse, TokenPair, type SessionMetadata } from './interfaces';
@@ -14,12 +14,6 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  @ApiOperation({
-    summary: 'Authenticate a user',
-  })
-  @ApiOkResponse({
-    description: 'User authenticated successfully',
-  })
   login(
     @Body() dto: LoginDto,
     @CurrentSessionMetadata() metadata: SessionMetadata,
@@ -29,13 +23,16 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
-  @ApiOperation({
-    summary: 'Rotate refresh token and issue a new token pair',
-  })
-  @ApiOkResponse({
-    description: 'Tokens refreshed successfully',
-  })
   refresh(@Body() dto: RefreshDto): Promise<TokenPair> {
     return this.authenticationService.refresh(dto);
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse({
+    description: 'Session revoked successfully',
+  })
+  async logout(@CurrentUser() user: AuthenticatedUser): Promise<void> {
+    await this.authenticationService.logout(user.sessionId);
   }
 }

@@ -3,60 +3,33 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-import { PrismaService } from '../../database';
-import { AuthUser } from '../interfaces';
-import { JwtPayload } from './interfaces';
+import type { AuthenticatedUser, JwtPayload } from './interfaces';
+import { UsersService } from '../../modules';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    config: ConfigService,
-    private readonly prisma: PrismaService,
+    configService: ConfigService,
+    private readonly usersService: UsersService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
+      ignoreExpiration: false,
+      secretOrKey: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
     });
   }
 
-  async validate(payload: JwtPayload): Promise<AuthUser> {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: payload.sub,
-        isActive: true,
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        email: true,
-        role: {
-          select: {
-            name: true,
-            permissions: {
-              select: {
-                permission: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
+    const user = await this.usersService.findById(payload.sub);
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid or inactive user');
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException();
     }
 
     return {
-      id: user.id,
+      userId: user.id,
+      sessionId: payload.sessionId,
       email: user.email,
-      role: user.role.name,
-      permissions: user.role.permissions.map(
-        ({ permission }) => permission.name,
-      ),
     };
   }
 }

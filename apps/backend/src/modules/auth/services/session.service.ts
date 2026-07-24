@@ -35,18 +35,6 @@ export class SessionService {
     });
   }
 
-  revoke(sessionId: string): Promise<SessionProjection> {
-    return this.prisma.session.update({
-      where: {
-        id: sessionId,
-      },
-      data: {
-        revokedAt: new Date(),
-      },
-      select: SESSION_SELECT,
-    });
-  }
-
   async revokeAllByUserId(userId: string): Promise<number> {
     const result = await this.prisma.session.updateMany({
       where: {
@@ -97,6 +85,20 @@ export class SessionService {
       data: {
         refreshTokenHash: input.newRefreshTokenHash,
         lastUsedAt: new Date(),
+      },
+    });
+
+    return result.count === 1;
+  }
+
+  async revokeById(sessionId: string): Promise<boolean> {
+    const result = await this.prisma.session.updateMany({
+      where: {
+        id: sessionId,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
       },
     });
 
