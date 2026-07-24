@@ -3,7 +3,6 @@ import { Prisma } from '@prisma/client';
 export const SESSION_SELECT = {
   id: true,
   userId: true,
-  refreshTokenHash: true,
   userAgent: true,
   ipAddress: true,
   expiresAt: true,
@@ -16,9 +15,9 @@ export const SESSION_SELECT = {
 export const SESSION_VALIDATION_SELECT = {
   id: true,
   userId: true,
-  refreshTokenHash: true,
   expiresAt: true,
   revokedAt: true,
+
   user: {
     select: {
       isActive: true,
@@ -29,25 +28,15 @@ export const SESSION_VALIDATION_SELECT = {
 
 export const SESSION_AUTHORIZATION_SELECT = {
   id: true,
+  userId: true,
+  expiresAt: true,
+  revokedAt: true,
   user: {
     select: {
       id: true,
       email: true,
       isActive: true,
       deletedAt: true,
-      role: {
-        select: {
-          permissions: {
-            select: {
-              permission: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      },
     },
   },
 } satisfies Prisma.SessionSelect;

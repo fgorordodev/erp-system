@@ -22,7 +22,6 @@ import {
   type AuthenticatedUser,
   CurrentUser,
   Permissions,
-  PERMISSIONS,
 } from '../../security';
 import {
   CreateUserDto,
@@ -32,6 +31,8 @@ import {
   UserRoleResponseDto,
 } from './dto';
 import { UsersService } from './users.service';
+
+import { PERMISSIONS } from '../../security';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')

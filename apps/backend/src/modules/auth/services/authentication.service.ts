@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import type { StringValue } from 'ms';
 
+import { BusinessException, ErrorCode } from '../../../common';
 import { JwtService, TokenService } from '../../../security';
 import { UserMapper } from '../../users';
 import {
@@ -11,16 +12,17 @@ import {
   AUTH_TOKEN_CONFIG,
 } from '../constants';
 import { LoginDto, RefreshDto } from '../dto';
-import { LoginResponse, SessionMetadata, TokenPair } from '../interfaces';
+import type { LoginResponse, SessionMetadata, TokenPair } from '../interfaces';
 import { CredentialsService } from './credentials.service';
+import { RefreshTokenService } from './refresh-token.service';
 import { SessionService } from './session.service';
-import { BusinessException, ErrorCode } from '../../../common';
 
 @Injectable()
 export class AuthenticationService {
   constructor(
     private readonly credentialsService: CredentialsService,
     private readonly sessionService: SessionService,
+    private readonly refreshTokenService: RefreshTokenService,
     private readonly tokenService: TokenService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -35,6 +37,8 @@ export class AuthenticationService {
       dto.password,
     );
 
+    const expiresAt = this.getSessionExpiration(dto.rememberMe);
+
     const refreshToken = this.tokenService.generate(
       AUTH_TOKEN_CONFIG.REFRESH_TOKEN_BYTES,
     );
@@ -43,10 +47,15 @@ export class AuthenticationService {
 
     const session = await this.sessionService.create({
       userId: user.id,
-      refreshTokenHash,
-      expiresAt: this.getSessionExpiration(dto.rememberMe),
+      expiresAt,
       userAgent: metadata.userAgent,
       ipAddress: metadata.ipAddress,
+    });
+
+    await this.refreshTokenService.create({
+      sessionId: session.id,
+      tokenHash: refreshTokenHash,
+      expiresAt,
     });
 
     const accessToken = await this.jwtService.generateAccessToken({
@@ -60,6 +69,40 @@ export class AuthenticationService {
       expiresIn: this.getAccessTokenExpirationSeconds(),
       user: UserMapper.toResponse(user),
     };
+  }
+
+  async refresh(dto: RefreshDto): Promise<TokenPair> {
+    const currentTokenHash = this.tokenService.hash(dto.refreshToken);
+
+    const newRefreshToken = this.tokenService.generate(
+      AUTH_TOKEN_CONFIG.REFRESH_TOKEN_BYTES,
+    );
+
+    const newTokenHash = this.tokenService.hash(newRefreshToken);
+
+    const rotation = await this.refreshTokenService.rotate({
+      currentTokenHash,
+      newTokenHash,
+    });
+
+    if (!('userId' in rotation) || !('sessionId' in rotation)) {
+      throw this.invalidRefreshTokenException();
+    }
+
+    const accessToken = await this.jwtService.generateAccessToken({
+      sub: rotation.userId,
+      sessionId: rotation.sessionId,
+    });
+
+    return {
+      accessToken,
+      refreshToken: newRefreshToken,
+      expiresIn: this.getAccessTokenExpirationSeconds(),
+    };
+  }
+
+  async logout(sessionId: string): Promise<void> {
+    await this.sessionService.revokeById(sessionId);
   }
 
   private getSessionExpiration(rememberMe: boolean): Date {
@@ -81,63 +124,11 @@ export class AuthenticationService {
     return Math.floor(ms(duration) / 1000);
   }
 
-  async refresh(dto: RefreshDto): Promise<TokenPair> {
-    const currentRefreshTokenHash = this.tokenService.hash(dto.refreshToken);
-
-    const session = await this.sessionService.findByRefreshTokenHash(
-      currentRefreshTokenHash,
-    );
-
-    if (!session) {
-      throw this.invalidRefreshTokenException();
-    }
-
-    if (
-      session.revokedAt ||
-      session.expiresAt <= new Date() ||
-      !session.user.isActive ||
-      session.user.deletedAt
-    ) {
-      throw this.invalidRefreshTokenException();
-    }
-
-    const newRefreshToken = this.tokenService.generate(
-      AUTH_TOKEN_CONFIG.REFRESH_TOKEN_BYTES,
-    );
-
-    const newRefreshTokenHash = this.tokenService.hash(newRefreshToken);
-
-    const rotated = await this.sessionService.rotateRefreshToken({
-      sessionId: session.id,
-      currentRefreshTokenHash,
-      newRefreshTokenHash,
-    });
-
-    if (!rotated) {
-      throw this.invalidRefreshTokenException();
-    }
-
-    const accessToken = await this.jwtService.generateAccessToken({
-      sub: session.userId,
-      sessionId: session.id,
-    });
-
-    return {
-      accessToken,
-      refreshToken: newRefreshToken,
-      expiresIn: this.getAccessTokenExpirationSeconds(),
-    };
-  }
-
   private invalidRefreshTokenException(): BusinessException {
     return new BusinessException(
       ErrorCode.INVALID_REFRESH_TOKEN,
       AUTH_ERROR_MESSAGES.INVALID_REFRESH_TOKEN,
       401,
     );
-  }
-
-  async logout(sessionId: string): Promise<void> {
-    await this.sessionService.revokeById(sessionId);
   }
 }

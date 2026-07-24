@@ -1,5 +1,4 @@
 import { Prisma } from '@prisma/client';
-
 import {
   SESSION_AUTHORIZATION_SELECT,
   SESSION_SELECT,

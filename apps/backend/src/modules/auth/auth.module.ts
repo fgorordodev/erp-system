@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 import {
   AuthenticationService,
   CredentialsService,
+  RefreshTokenService,
   SessionService,
 } from './services';
 import { DatabaseModule } from '../../database';
@@ -19,6 +20,7 @@ import { SecurityJwtModule } from '../../security';
     CredentialsService,
     SessionService,
     JwtStrategy,
+    RefreshTokenService,
   ],
 })
 export class AuthModule {}
