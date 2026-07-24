@@ -3,8 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database';
 import { CreateSessionInput, RotateSessionTokenInput } from '../interfaces';
 import {
+  SESSION_AUTHORIZATION_SELECT,
   SESSION_SELECT,
   SESSION_VALIDATION_SELECT,
+  SessionAuthorizationProjection,
   SessionProjection,
   SessionValidationProjection,
 } from '../persistence';
@@ -103,5 +105,26 @@ export class SessionService {
     });
 
     return result.count === 1;
+  }
+
+  findForAuthorization(
+    sessionId: string,
+    userId: string,
+  ): Promise<SessionAuthorizationProjection | null> {
+    return this.prisma.session.findFirst({
+      where: {
+        id: sessionId,
+        userId,
+        revokedAt: null,
+        expiresAt: {
+          gt: new Date(),
+        },
+        user: {
+          isActive: true,
+          deletedAt: null,
+        },
+      },
+      select: SESSION_AUTHORIZATION_SELECT,
+    });
   }
 }

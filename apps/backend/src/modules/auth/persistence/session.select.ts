@@ -26,3 +26,28 @@ export const SESSION_VALIDATION_SELECT = {
     },
   },
 } satisfies Prisma.SessionSelect;
+
+export const SESSION_AUTHORIZATION_SELECT = {
+  id: true,
+  user: {
+    select: {
+      id: true,
+      email: true,
+      isActive: true,
+      deletedAt: true,
+      role: {
+        select: {
+          permissions: {
+            select: {
+              permission: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.SessionSelect;

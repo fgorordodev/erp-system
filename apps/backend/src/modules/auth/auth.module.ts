@@ -7,10 +7,18 @@ import {
   CredentialsService,
   SessionService,
 } from './services';
+import { DatabaseModule } from '../../database';
+import { JwtStrategy } from './strategies';
+import { SecurityJwtModule } from '../../security';
 
 @Module({
-  imports: [UsersModule],
+  imports: [DatabaseModule, SecurityJwtModule, UsersModule],
   controllers: [AuthController],
-  providers: [AuthenticationService, CredentialsService, SessionService],
+  providers: [
+    AuthenticationService,
+    CredentialsService,
+    SessionService,
+    JwtStrategy,
+  ],
 })
 export class AuthModule {}

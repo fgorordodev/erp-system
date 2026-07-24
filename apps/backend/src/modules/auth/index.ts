@@ -6,3 +6,4 @@ export * from './interfaces';
 export * from './persistence';
 export * from './services';
 export * from './auth.module';
+export * from './strategies';
