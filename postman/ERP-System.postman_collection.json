@@ -1,0 +1,587 @@
+{
+  "info": {
+    "_postman_id": "3fe18d7b-a71a-4f02-913c-erp-system-api",
+    "name": "ERP System API",
+    "description": "Colección oficial del backend ERP. Flujo recomendado: Health → Login → endpoints de Users → Refresh → Logout. Los scripts guardan automáticamente tokens e IDs en el environment activo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.environment.get('baseUrl')) { pm.environment.set('baseUrl', 'http://localhost:3000/api'); }",
+          "pm.request.headers.upsert({ key: 'X-Request-Id', value: pm.variables.replaceIn('postman-{{$guid}}') });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "currentUserId",
+      "value": ""
+    },
+    {
+      "key": "createdUserId",
+      "value": ""
+    },
+    {
+      "key": "targetUserId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Check API readiness",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Comprueba que la API y PostgreSQL estén disponibles.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('Success envelope is valid', function () { pm.expect(json.success).to.eql(true); pm.expect(json.data).to.be.an('object'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "description": "Ejecutar Login antes de los endpoints protegidos.",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión con el administrador creado por el seed y almacena los tokens automáticamente.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"rememberMe\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "const data = json.data;",
+                  "pm.test('Token pair is returned', function () { pm.expect(data.accessToken).to.be.a('string').and.not.empty; pm.expect(data.refreshToken).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('accessToken', data.accessToken);",
+                  "pm.environment.set('refreshToken', data.refreshToken);",
+                  "if (data.user && data.user.id) { pm.environment.set('currentUserId', data.user.id); pm.environment.set('targetUserId', data.user.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Rota el refresh token de un solo uso y reemplaza ambos tokens en el environment.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Rotated tokens are returned', function () { pm.expect(data.accessToken).to.be.a('string').and.not.empty; pm.expect(data.refreshToken).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('accessToken', data.accessToken);",
+                  "pm.environment.set('refreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout current session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revoca la sesión actual y elimina los tokens guardados en Postman."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 204', function () { pm.response.to.have.status(204); });",
+                  "pm.environment.unset('accessToken');",
+                  "pm.environment.unset('refreshToken');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "Endpoints protegidos por JWT y permisos RBAC.",
+      "item": [
+        {
+          "name": "Create user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Crea un usuario EMPLOYEE y guarda su ID como createdUserId y targetUserId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"{{newUserPassword}}\",\n  \"firstName\": \"{{newUserFirstName}}\",\n  \"lastName\": \"{{newUserLastName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Created user has an id', function () { pm.expect(data.id).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('createdUserId', data.id);",
+                  "pm.environment.set('targetUserId', data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Lista usuarios no eliminados. Requiere user:read."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Data is an array', function () { pm.expect(data).to.be.an('array'); });",
+                  "if (!pm.environment.get('targetUserId') && data.length) pm.environment.set('targetUserId', data[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get current user",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "Obtiene el usuario vinculado al access token actual."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Current user is returned', function () { pm.expect(data.id).to.be.a('string'); });",
+                  "pm.environment.set('currentUserId', data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get user by id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{targetUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{targetUserId}}"
+              ]
+            },
+            "description": "Obtiene un usuario por CUID. Usa targetUserId."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Requested user is returned', function () { pm.expect(data.id).to.eql(pm.environment.get('targetUserId')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{targetUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{targetUserId}}"
+              ]
+            },
+            "description": "Actualiza los campos de perfil del targetUserId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{updatedUserEmail}}\",\n  \"firstName\": \"{{updatedUserFirstName}}\",\n  \"lastName\": \"{{updatedUserLastName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Updated user is returned', function () { pm.expect(data.id).to.eql(pm.environment.get('targetUserId')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Disable user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{targetUserId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{targetUserId}}",
+                "status"
+              ]
+            },
+            "description": "Deshabilita el usuario objetivo. Cambiar el body a true para habilitarlo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json().data;",
+                  "pm.test('User is disabled', function () { pm.expect(data.isActive).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Soft-delete user",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{targetUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{targetUserId}}"
+              ]
+            },
+            "description": "Eliminación lógica. Usar preferentemente sobre un usuario creado por la colección."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response time is acceptable', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });",
+                  "pm.test('Response is JSON when a body exists', function () { if (pm.response.text()) pm.response.to.be.json; });",
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Deleted user is returned', function () { pm.expect(data.id).to.eql(pm.environment.get('targetUserId')); });",
+                  "if (pm.environment.get('createdUserId') === pm.environment.get('targetUserId')) { pm.environment.unset('createdUserId'); pm.environment.unset('targetUserId'); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

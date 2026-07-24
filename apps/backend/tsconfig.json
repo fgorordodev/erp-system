@@ -1,0 +1,12 @@
+{
+  "extends": "@erp/tsconfig/nestjs.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist",
+    "paths": {
+      "@backend/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test"]
+}
