@@ -8,8 +8,8 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "turbo run dev",
-    "dev:backend": "turbo run dev --filter=@erp/backend",
+    "dev": "pnpm --filter @erp/database build && turbo run dev",
+    "dev:backend": "pnpm --filter @erp/database build && turbo run dev --filter=@erp/backend",
     "dev:frontend": "turbo run dev --filter=@erp/frontend",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
@@ -17,18 +17,11 @@
     "lint": "turbo run lint",
     "clean": "turbo run clean && rimraf node_modules",
     "db:generate": "pnpm --filter @erp/database db:generate",
+    "db:build": "pnpm --filter @erp/database build",
     "db:migrate": "pnpm --filter @erp/database db:migrate",
     "db:deploy": "pnpm --filter @erp/database db:deploy",
     "db:seed": "pnpm --filter @erp/database db:seed",
-    "db:studio": "pnpm --filter @erp/database db:studio",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "build:frontend": "turbo run build --filter=@erp/frontend",
-    "lint:frontend": "turbo run lint --filter=@erp/frontend",
-    "typecheck:frontend": "turbo run typecheck --filter=@erp/frontend",
-    "swagger:generate": "pnpm --filter @erp/backend swagger:generate",
-    "swagger:validate": "pnpm --filter @erp/backend swagger:validate",
-    "check": "pnpm lint && pnpm typecheck && pnpm build"
+    "db:studio": "pnpm --filter @erp/database db:studio"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

@@ -113,9 +113,9 @@ Start PostgreSQL, generate Prisma Client, apply migrations and seed the developm
 
 ```bash
 docker compose up -d
-pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
+pnpm db:build
 ```
 
 Start the workspace:

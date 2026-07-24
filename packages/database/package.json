@@ -12,6 +12,7 @@
     }
   },
   "scripts": {
+    "dev": "tsc -p tsconfig.json --watch",
     "build": "pnpm db:generate && tsc -p tsconfig.json",
     "typecheck": "pnpm db:generate && tsc -p tsconfig.json --noEmit",
     "clean": "rimraf dist",
