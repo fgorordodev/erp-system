@@ -19,16 +19,21 @@ import {
   LoginDto,
   LoginResponseDto,
   RefreshDto,
+  ResetPasswordDto,
   TokenPairResponseDto,
 } from '@backend/modules/auth/dto';
 import type { SessionMetadata } from '@backend/modules/auth/interfaces';
 import { AuthenticationService } from '@backend/modules/auth/services';
 import { type AuthenticatedUser, CurrentUser, Public } from '@backend/security';
+import { PasswordResetService } from './services/password-reset.service';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authenticationService: AuthenticationService) {}
+  constructor(
+    private readonly authenticationService: AuthenticationService,
+    private readonly passwordResetService: PasswordResetService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -92,5 +97,18 @@ export class AuthController {
   @ApiInternalError()
   async logout(@CurrentUser() user: AuthenticatedUser): Promise<void> {
     await this.authenticationService.logout(user.sessionId);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Reset account password',
+  })
+  @ApiNoContentResponse({
+    description: 'Password successfully reset.',
+  })
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    await this.passwordResetService.reset(dto);
   }
 }

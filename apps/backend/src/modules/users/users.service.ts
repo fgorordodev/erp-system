@@ -14,6 +14,9 @@ import {
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
 import { ROLES } from '@erp/rbac';
 import { ErrorCode } from '@erp/api-contracts';
+import type { Prisma } from '@erp/database';
+
+type UserDatabaseClient = Pick<Prisma.TransactionClient, 'user'>;
 
 @Injectable()
 export class UsersService {
@@ -154,6 +157,21 @@ export class UsersService {
     });
 
     return user ? UserMapper.toResponse(user) : null;
+  }
+
+  async updatePassword(
+    userId: string,
+    passwordHash: string,
+    database: UserDatabaseClient = this.prisma,
+  ): Promise<void> {
+    await database.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        password: passwordHash,
+      },
+    });
   }
 
   private async ensureEmailAvailable(

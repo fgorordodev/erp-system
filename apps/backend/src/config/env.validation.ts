@@ -161,6 +161,36 @@ export const envSchema = z
         'AUTH_LOCKOUT_DURATION_MS must be lower than or equal to 86400000',
       )
       .default(900_000),
+
+    AUTH_PASSWORD_RESET_TOKEN_BYTES: z.coerce
+      .number()
+      .int('AUTH_PASSWORD_RESET_TOKEN_BYTES must be an integer')
+      .min(
+        16,
+        'AUTH_PASSWORD_RESET_TOKEN_BYTES must be greater than or equal to 16',
+      )
+      .max(
+        64,
+        'AUTH_PASSWORD_RESET_TOKEN_BYTES must be lower than or equal to 64',
+      )
+      .default(32),
+
+    AUTH_PASSWORD_RESET_EXPIRES_MS: z.coerce
+      .number()
+      .int('AUTH_PASSWORD_RESET_EXPIRES_MS must be an integer')
+      .min(
+        300_000,
+        'AUTH_PASSWORD_RESET_EXPIRES_MS must be at least 300000 milliseconds',
+      )
+      .max(
+        86_400_000,
+        'AUTH_PASSWORD_RESET_EXPIRES_MS must be lower than or equal to 86400000',
+      )
+      .default(900_000),
+
+    AUTH_PASSWORD_RESET_URL: z
+      .url('AUTH_PASSWORD_RESET_URL must be a valid absolute URL')
+      .default('http://localhost:5173/reset-password'),
   })
   .passthrough()
   .superRefine((config, context) => {

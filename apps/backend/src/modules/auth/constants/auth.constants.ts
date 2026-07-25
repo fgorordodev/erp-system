@@ -7,6 +7,8 @@ export const AUTH_ERROR_MESSAGES = {
   CURRENT_PASSWORD_INVALID: 'Current password is invalid',
   PASSWORDS_MUST_DIFFER:
     'New password must be different from the current password',
+  INVALID_PASSWORD_RESET_TOKEN:
+    'The password reset token is invalid or has expired',
 } as const;
 
 export const AUTH_SESSION_DURATION = {

@@ -24,8 +24,9 @@ model User {
   deletedAt DateTime?
   isActive  Boolean   @default(true)
 
-  roles    UserRole[]
-  sessions Session[]
+  roles               UserRole[]
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([isActive, deletedAt])
 }
@@ -111,6 +112,22 @@ model RefreshToken {
   replacesToken   RefreshToken? @relation("RefreshTokenReplacement")
 
   @@index([sessionId, revokedAt])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, usedAt, revokedAt])
   @@index([expiresAt])
   @@index([createdAt])
 }
