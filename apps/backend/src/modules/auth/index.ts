@@ -1,8 +1,5 @@
-export * from './auth.module';
-export * from './constants';
-export * from './decorators';
-export * from './dto';
-export * from './interfaces';
-export * from './persistence';
-export * from './services';
-export * from './strategies';
+export { AuthModule } from './auth.module';
+export { JwtAuthGuard } from './guards/jwt-auth.guard';
+export { CurrentUser } from './decorators/current-user.decorator';
+export type { AuthenticatedUser } from './types/authenticated-user.type';
+export { IS_PUBLIC_KEY, Public } from './decorators/public.decorator';

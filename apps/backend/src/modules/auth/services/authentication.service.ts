@@ -4,7 +4,6 @@ import ms from 'ms';
 import type { StringValue } from 'ms';
 
 import { BusinessException } from '@backend/common';
-import { JwtService } from '@backend/security/jwt';
 import { UserMapper } from '@backend/modules/users';
 import {
   AUTH_ERROR_MESSAGES,
@@ -23,6 +22,7 @@ import { SessionService } from './session.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { ErrorCode } from '@erp/api-contracts';
 import { SecureTokenService } from '@backend/crypto';
+import { AccessTokenService } from './access-token.service';
 
 @Injectable()
 export class AuthenticationService {
@@ -31,7 +31,7 @@ export class AuthenticationService {
     private readonly sessionService: SessionService,
     private readonly refreshTokenService: RefreshTokenService,
     private readonly secureTokenService: SecureTokenService,
-    private readonly jwtService: JwtService,
+    private readonly accessTokenService: AccessTokenService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -65,7 +65,7 @@ export class AuthenticationService {
       expiresAt,
     });
 
-    const accessToken = await this.jwtService.generateAccessToken({
+    const accessToken = await this.accessTokenService.generate({
       sub: user.id,
       sessionId: session.id,
     });
@@ -96,7 +96,7 @@ export class AuthenticationService {
       throw this.invalidRefreshTokenException();
     }
 
-    const accessToken = await this.jwtService.generateAccessToken({
+    const accessToken = await this.accessTokenService.generate({
       sub: rotation.userId,
       sessionId: rotation.sessionId,
     });

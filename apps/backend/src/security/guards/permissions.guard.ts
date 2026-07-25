@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
-import type { AuthenticatedUser } from '@backend/security/jwt/interfaces';
 import { PERMISSIONS_KEY } from '@backend/security/decorator';
+import { AuthenticatedUser } from '@backend/modules';
 
 interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;

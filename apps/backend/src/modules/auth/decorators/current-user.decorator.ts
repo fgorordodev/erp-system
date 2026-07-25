@@ -1,9 +1,8 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import type { Request } from 'express';
 
-import type { AuthenticatedUser } from '@backend/security/jwt/interfaces';
+import type { AuthenticatedUser } from '../types/authenticated-user.type';
 
-interface AuthenticatedRequest extends Request {
+interface AuthenticatedRequest {
   user: AuthenticatedUser;
 }
 

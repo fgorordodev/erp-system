@@ -14,7 +14,7 @@ import {
   ApiProtectedErrors,
   ApiValidationError,
 } from '@backend/common';
-import { CurrentSessionMetadata } from '@backend/modules/auth/decorators';
+
 import {
   LoginDto,
   LoginResponseDto,
@@ -23,9 +23,13 @@ import {
   TokenPairResponseDto,
 } from '@backend/modules/auth/dto';
 import type { SessionMetadata } from '@backend/modules/auth/interfaces';
-import { AuthenticationService } from '@backend/modules/auth/services';
-import { type AuthenticatedUser, CurrentUser, Public } from '@backend/security';
 import { PasswordResetService } from './services/password-reset.service';
+
+import { Public } from './decorators/public.decorator';
+import { CurrentUser } from './decorators/current-user.decorator';
+import type { AuthenticatedUser } from './types/authenticated-user.type';
+import { CurrentSessionMetadata } from './decorators/session-metadata.decorator';
+import { AuthenticationService } from './services/authentication.service';
 
 @ApiTags('Auth')
 @Controller('auth')

@@ -13,13 +13,13 @@ import {
 import { throttlerConfig, validateEnv } from '@backend/config';
 import { DatabaseModule } from '@backend/database';
 import { AuthModule, HealthModule, UsersModule } from '@backend/modules';
-import {
-  JwtAuthGuard,
-  PermissionsGuard,
-  RolesGuard,
-  SecurityModule,
-} from '@backend/security';
+import { SecurityModule } from '@backend/security';
+
+import { JwtAuthGuard } from '@backend/modules/auth';
+
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { RolesGuard } from './security/guards/roles.guard';
+import { PermissionsGuard } from './security/guards/permissions.guard';
 
 @Module({
   imports: [
