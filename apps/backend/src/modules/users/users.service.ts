@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 
 import { BusinessException } from '@backend/common';
 import { PrismaService } from '@backend/database';
-import { HashService } from '@backend/security';
 import { UserMapper } from '@backend/modules/users/mappers';
 import {
   USER_AUTH_SELECT,
@@ -15,6 +14,7 @@ import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
 import { ROLES } from '@erp/rbac';
 import { ErrorCode } from '@erp/api-contracts';
 import type { Prisma } from '@erp/database';
+import { PasswordHasherService } from '@backend/crypto';
 
 type UserDatabaseClient = Pick<Prisma.TransactionClient, 'user'>;
 
@@ -22,7 +22,7 @@ type UserDatabaseClient = Pick<Prisma.TransactionClient, 'user'>;
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly hashService: HashService,
+    private readonly passwordHasher: PasswordHasherService,
   ) {}
 
   async create(dto: CreateUserDto): Promise<UserResponseDto> {
@@ -43,7 +43,7 @@ export class UsersService {
 
     const input: CreateUserInput = {
       email: dto.email,
-      passwordHash: await this.hashService.hash(dto.password),
+      passwordHash: await this.passwordHasher.hash(dto.password),
       firstName: dto.firstName.trim(),
       lastName: dto.lastName.trim(),
       roleId: defaultRole.id,

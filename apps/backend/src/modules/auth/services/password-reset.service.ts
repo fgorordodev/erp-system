@@ -3,8 +3,6 @@ import { ConfigService } from '@nestjs/config';
 
 import { BusinessException } from '@backend/common';
 import { PrismaService } from '@backend/database';
-import { HashService } from '@backend/security';
-import { TokenService } from '@backend/security/token';
 import { UsersService } from '@backend/modules/users';
 import { ErrorCode } from '@erp/api-contracts';
 
@@ -12,14 +10,15 @@ import { AUTH_ERROR_MESSAGES } from '../constants';
 import { ResetPasswordDto } from '../dto';
 import { PasswordResetNotificationService } from './password-reset-notification.service';
 import { PasswordResetTokenService } from './password-reset-token.service';
+import { PasswordHasherService, SecureTokenService } from '@backend/crypto';
 
 @Injectable()
 export class PasswordResetService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
-    private readonly hashService: HashService,
-    private readonly tokenService: TokenService,
+    private readonly passwordHasherService: PasswordHasherService,
+    private readonly secureTokenService: SecureTokenService,
     private readonly passwordResetTokenService: PasswordResetTokenService,
     private readonly notificationService: PasswordResetNotificationService,
     private readonly configService: ConfigService,
@@ -45,8 +44,8 @@ export class PasswordResetService {
       'AUTH_PASSWORD_RESET_EXPIRES_MS',
     );
 
-    const token = this.tokenService.generate(tokenBytes);
-    const tokenHash = this.tokenService.hash(token);
+    const token = this.secureTokenService.generate(tokenBytes);
+    const tokenHash = this.secureTokenService.hash(token);
     const expiresAt = new Date(Date.now() + expiresInMs);
 
     await this.passwordResetTokenService.revokeActiveByUserId(user.id);
@@ -65,8 +64,8 @@ export class PasswordResetService {
   }
 
   async reset(dto: ResetPasswordDto): Promise<void> {
-    const tokenHash = this.tokenService.hash(dto.token);
-    const passwordHash = await this.hashService.hash(dto.password);
+    const tokenHash = this.secureTokenService.hash(dto.token);
+    const passwordHash = await this.passwordHasherService.hash(dto.password);
     const now = new Date();
 
     await this.prisma.$transaction(async (transaction) => {

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { UsersModule } from '@backend/modules/users';
+import { CryptoModule } from '@backend/crypto';
+import { DatabaseModule } from '@backend/database';
 import {
   AccountLockoutService,
   AuthenticationService,
@@ -10,14 +11,15 @@ import {
   RefreshTokenService,
   SessionService,
 } from '@backend/modules/auth/services';
-import { DatabaseModule } from '@backend/database';
 import { JwtStrategy } from '@backend/modules/auth/strategies';
+import { UsersModule } from '@backend/modules/users';
 import { SecurityJwtModule } from '@backend/security/jwt';
+
 import { AuthController } from './auth.controller';
 import { PasswordResetService } from './services/password-reset.service';
 
 @Module({
-  imports: [DatabaseModule, SecurityJwtModule, UsersModule],
+  imports: [DatabaseModule, CryptoModule, SecurityJwtModule, UsersModule],
   controllers: [AuthController],
   providers: [
     AuthenticationService,

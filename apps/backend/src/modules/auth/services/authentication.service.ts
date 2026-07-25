@@ -5,7 +5,6 @@ import type { StringValue } from 'ms';
 
 import { BusinessException } from '@backend/common';
 import { JwtService } from '@backend/security/jwt';
-import { TokenService } from '@backend/security/token';
 import { UserMapper } from '@backend/modules/users';
 import {
   AUTH_ERROR_MESSAGES,
@@ -23,6 +22,7 @@ import { CredentialsService } from './credentials.service';
 import { SessionService } from './session.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { ErrorCode } from '@erp/api-contracts';
+import { SecureTokenService } from '@backend/crypto';
 
 @Injectable()
 export class AuthenticationService {
@@ -30,7 +30,7 @@ export class AuthenticationService {
     private readonly credentialsService: CredentialsService,
     private readonly sessionService: SessionService,
     private readonly refreshTokenService: RefreshTokenService,
-    private readonly tokenService: TokenService,
+    private readonly secureTokenService: SecureTokenService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -46,11 +46,11 @@ export class AuthenticationService {
 
     const expiresAt = this.getSessionExpiration(dto.rememberMe);
 
-    const refreshToken = this.tokenService.generate(
+    const refreshToken = this.secureTokenService.generate(
       AUTH_TOKEN_CONFIG.REFRESH_TOKEN_BYTES,
     );
 
-    const refreshTokenHash = this.tokenService.hash(refreshToken);
+    const refreshTokenHash = this.secureTokenService.hash(refreshToken);
 
     const session = await this.sessionService.create({
       userId: user.id,
@@ -79,13 +79,13 @@ export class AuthenticationService {
   }
 
   async refresh(dto: RefreshDto): Promise<TokenPair> {
-    const currentTokenHash = this.tokenService.hash(dto.refreshToken);
+    const currentTokenHash = this.secureTokenService.hash(dto.refreshToken);
 
-    const newRefreshToken = this.tokenService.generate(
+    const newRefreshToken = this.secureTokenService.generate(
       AUTH_TOKEN_CONFIG.REFRESH_TOKEN_BYTES,
     );
 
-    const newTokenHash = this.tokenService.hash(newRefreshToken);
+    const newTokenHash = this.secureTokenService.hash(newRefreshToken);
 
     const rotation = await this.refreshTokenService.rotate({
       currentTokenHash,
