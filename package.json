@@ -8,20 +8,20 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "pnpm --filter @erp/database build && turbo run dev",
-    "dev:backend": "pnpm --filter @erp/database build && turbo run dev --filter=@erp/backend",
+    "dev": "turbo run dev",
+    "dev:backend": "turbo run dev --filter=@erp/backend",
     "dev:frontend": "turbo run dev --filter=@erp/frontend",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "clean": "turbo run clean && rimraf node_modules",
-    "db:generate": "pnpm --filter @erp/database db:generate",
-    "db:build": "pnpm --filter @erp/database build",
-    "db:migrate": "pnpm --filter @erp/database db:migrate",
-    "db:deploy": "pnpm --filter @erp/database db:deploy",
-    "db:seed": "pnpm --filter @erp/database db:seed",
-    "db:studio": "pnpm --filter @erp/database db:studio"
+    "db:generate": "pnpm --filter @erp/database run db:generate",
+    "db:build": "pnpm --filter @erp/database run build",
+    "db:migrate": "pnpm --filter @erp/database run db:migrate",
+    "db:deploy": "pnpm --filter @erp/database run db:deploy",
+    "db:seed": "pnpm --filter @erp/database run db:seed",
+    "db:studio": "pnpm --filter @erp/database run db:studio"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

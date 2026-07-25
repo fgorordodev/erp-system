@@ -1,10 +1,13 @@
 {
   "name": "@erp/tsconfig",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "Shared TypeScript configurations for the ERP monorepo.",
+  "license": "UNLICENSED",
   "files": [
-    "base.json",
-    "nestjs.json",
-    "react.json"
-  ]
+    "base.json"
+  ],
+  "exports": {
+    "./base.json": "./base.json"
+  }
 }
