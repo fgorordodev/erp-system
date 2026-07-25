@@ -1,17 +1,42 @@
-import { ValidationPipe, type INestApplication } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { json, urlencoded } from 'express';
 import helmet from 'helmet';
 
-export function configureApplication(app: INestApplication): void {
+import { createCorsOptions } from './cors.config';
+import { createHelmetOptions } from './helmet.config';
+
+export function configureApplication(app: NestExpressApplication): void {
   const configService = app.get(ConfigService);
-  const frontendUrl = configService.getOrThrow<string>('FRONTEND_URL');
+
+  const requestBodyLimit =
+    configService.getOrThrow<string>('REQUEST_BODY_LIMIT');
+
+  const trustProxy = configService.getOrThrow<boolean>('TRUST_PROXY');
+
+  app.disable('x-powered-by');
+  app.set('trust proxy', trustProxy);
 
   app.setGlobalPrefix('api');
-  app.use(helmet());
-  app.enableCors({
-    origin: frontendUrl,
-    credentials: true,
-  });
+
+  app.use(helmet(createHelmetOptions(configService)));
+
+  app.enableCors(createCorsOptions(configService));
+
+  app.use(
+    json({
+      limit: requestBodyLimit,
+    }),
+  );
+
+  app.use(
+    urlencoded({
+      limit: requestBodyLimit,
+      extended: true,
+    }),
+  );
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -20,6 +45,7 @@ export function configureApplication(app: INestApplication): void {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      stopAtFirstError: false,
     }),
   );
 }
