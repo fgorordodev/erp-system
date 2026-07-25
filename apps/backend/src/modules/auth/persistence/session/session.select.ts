@@ -27,15 +27,10 @@ export const SESSION_VALIDATION_SELECT = {
 
 export const SESSION_AUTHORIZATION_SELECT = {
   id: true,
-  userId: true,
-  expiresAt: true,
-  revokedAt: true,
   user: {
     select: {
       id: true,
       email: true,
-      isActive: true,
-      deletedAt: true,
       roles: {
         select: {
           role: {

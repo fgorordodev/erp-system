@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@erp/database';
 
 import { PrismaService } from '@backend/database';
 import {
@@ -6,10 +7,11 @@ import {
   SESSION_SELECT,
   SESSION_VALIDATION_SELECT,
   type CreateSessionInput,
+  type CreateSessionWithRefreshTokenInput,
   type SessionAuthorizationProjection,
   type SessionProjection,
   type SessionValidationProjection,
-} from '@backend/modules/auth/persistence/session';
+} from '@backend/modules/auth/persistence';
 
 @Injectable()
 export class SessionService {
@@ -24,6 +26,32 @@ export class SessionService {
         ipAddress: input.ipAddress,
       },
       select: SESSION_SELECT,
+    });
+  }
+
+  createWithRefreshToken(
+    input: CreateSessionWithRefreshTokenInput,
+  ): Promise<SessionProjection> {
+    return this.prisma.$transaction(async (transaction) => {
+      const session = await transaction.session.create({
+        data: {
+          userId: input.userId,
+          expiresAt: input.expiresAt,
+          userAgent: input.userAgent,
+          ipAddress: input.ipAddress,
+        },
+        select: SESSION_SELECT,
+      });
+
+      await transaction.refreshToken.create({
+        data: {
+          sessionId: session.id,
+          tokenHash: input.refreshTokenHash,
+          expiresAt: input.expiresAt,
+        },
+      });
+
+      return session;
     });
   }
 
@@ -69,16 +97,18 @@ export class SessionService {
   }
 
   async touch(sessionId: string): Promise<boolean> {
+    const now = new Date();
+
     const result = await this.prisma.session.updateMany({
       where: {
         id: sessionId,
         revokedAt: null,
         expiresAt: {
-          gt: new Date(),
+          gt: now,
         },
       },
       data: {
-        lastUsedAt: new Date(),
+        lastUsedAt: now,
       },
     });
 
@@ -113,51 +143,39 @@ export class SessionService {
     return sessionResult.count === 1;
   }
 
-  async revokeAllByUserId(userId: string): Promise<number> {
-    const revokedAt = new Date();
+  revokeAllByUserId(userId: string): Promise<number> {
+    return this.prisma.$transaction((transaction) =>
+      this.revokeAllByUserIdWithTransaction(transaction, userId),
+    );
+  }
 
-    return this.prisma.$transaction(async (transaction) => {
-      const activeSessions = await transaction.session.findMany({
-        where: {
-          userId,
-          revokedAt: null,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (activeSessions.length === 0) {
-        return 0;
-      }
-
-      const sessionIds = activeSessions.map((session) => session.id);
-
-      const sessionResult = await transaction.session.updateMany({
-        where: {
-          id: {
-            in: sessionIds,
-          },
-          revokedAt: null,
-        },
-        data: {
-          revokedAt,
-        },
-      });
-
-      await transaction.refreshToken.updateMany({
-        where: {
-          sessionId: {
-            in: sessionIds,
-          },
-          revokedAt: null,
-        },
-        data: {
-          revokedAt,
-        },
-      });
-
-      return sessionResult.count;
+  async revokeAllByUserIdWithTransaction(
+    transaction: Prisma.TransactionClient,
+    userId: string,
+    revokedAt = new Date(),
+  ): Promise<number> {
+    const sessionResult = await transaction.session.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt,
+      },
     });
+
+    await transaction.refreshToken.updateMany({
+      where: {
+        session: {
+          userId,
+        },
+        revokedAt: null,
+      },
+      data: {
+        revokedAt,
+      },
+    });
+
+    return sessionResult.count;
   }
 }

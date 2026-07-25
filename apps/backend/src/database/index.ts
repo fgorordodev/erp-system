@@ -1,2 +1,2 @@
-export * from './database.module';
+export * from './prisma.module';
 export * from './prisma.service';

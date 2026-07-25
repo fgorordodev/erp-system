@@ -15,7 +15,7 @@ export class PrismaService
 {
   constructor(private readonly configService: ConfigService) {
     const adapter = new PrismaPg({
-      connectionString: configService.getOrThrow('DATABASE_URL'),
+      connectionString: configService.getOrThrow<string>('DATABASE_URL'),
     });
 
     super({
@@ -25,12 +25,12 @@ export class PrismaService
 
   private readonly logger = new Logger(PrismaService.name);
 
-  async onModuleInit() {
+  async onModuleInit(): Promise<void> {
     await this.$connect();
     this.logger.log('Database connected');
   }
 
-  async onModuleDestroy() {
+  async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
   }
 }

@@ -7,13 +7,13 @@ import {
   RefreshTokenService,
   SessionService,
 } from '@backend/modules/auth/services';
-import { DatabaseModule } from '@backend/database';
+import { PrismaModule } from '@backend/database';
 import { JwtStrategy } from '@backend/modules/auth/strategies';
 import { SecurityJwtModule } from '@backend/security/jwt';
 import { AuthController } from './auth.controller';
 
 @Module({
-  imports: [DatabaseModule, SecurityJwtModule, UsersModule],
+  imports: [PrismaModule, SecurityJwtModule, UsersModule],
   controllers: [AuthController],
   providers: [
     AuthenticationService,

@@ -21,7 +21,7 @@ model User {
   roles    UserRole[]
   sessions Session[]
 
-  @@index([isActive, deletedAt])
+  @@index([deletedAt, isActive])
 }
 
 model Role {

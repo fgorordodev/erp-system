@@ -1,4 +1,9 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
@@ -11,7 +16,6 @@ import {
   ResponseInterceptor,
 } from '@backend/common';
 import { validateEnv } from '@backend/config';
-import { DatabaseModule } from '@backend/database';
 import { AuthModule, HealthModule, UsersModule } from '@backend/modules';
 import {
   JwtAuthGuard,
@@ -19,16 +23,18 @@ import {
   RolesGuard,
   SecurityModule,
 } from '@backend/security';
+import { PrismaModule } from '@backend/database';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['../../.env', '.env'],
+      envFilePath: join(process.cwd(), '../../.env'),
       validate: validateEnv,
     }),
     LoggerModule,
-    DatabaseModule,
+    PrismaModule,
     SecurityModule,
     HealthModule,
     UsersModule,
@@ -67,6 +73,9 @@ import {
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestIdMiddleware).forRoutes('{*path}');
+    consumer.apply(RequestIdMiddleware).forRoutes({
+      path: '{*path}',
+      method: RequestMethod.ALL,
+    });
   }
 }

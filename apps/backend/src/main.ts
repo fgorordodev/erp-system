@@ -8,11 +8,13 @@ import {
   SWAGGER_UI_PATH,
 } from '@backend/config';
 import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
+
+const bootstrapLogger = new Logger('Bootstrap');
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
-  const logger = new Logger('Bootstrap');
   const port = configService.getOrThrow<number>('BACKEND_PORT');
 
   configureApplication(app);
@@ -20,10 +22,17 @@ async function bootstrap(): Promise<void> {
 
   await app.listen(port);
 
-  logger.log(`ERP API running at http://localhost:${port}/api`);
-  logger.log(
+  bootstrapLogger.log(`ERP API running at http://localhost:${port}/api`);
+  bootstrapLogger.log(
     `Swagger available at http://localhost:${port}/${SWAGGER_UI_PATH}`,
   );
 }
 
-void bootstrap();
+void bootstrap().catch((error: unknown) => {
+  bootstrapLogger.error(
+    'Application failed to start',
+    error instanceof Error ? error.stack : String(error),
+  );
+
+  process.exitCode = 1;
+});

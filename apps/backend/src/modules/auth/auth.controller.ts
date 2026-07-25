@@ -8,11 +8,11 @@ import {
 } from '@nestjs/swagger';
 
 import {
+  ApiErrorResponseDto,
   ApiInternalError,
   ApiOkEnvelope,
   ApiProtectedErrors,
   ApiValidationError,
-  ApiErrorResponseDto,
 } from '@backend/common';
 import { CurrentSessionMetadata } from '@backend/modules/auth/decorators';
 import {
@@ -21,9 +21,9 @@ import {
   RefreshDto,
   TokenPairResponseDto,
 } from '@backend/modules/auth/dto';
+import type { SessionMetadata } from '@backend/modules/auth/interfaces';
 import { AuthenticationService } from '@backend/modules/auth/services';
 import { type AuthenticatedUser, CurrentUser, Public } from '@backend/security';
-import type { SessionMetadata } from './interfaces';
 
 @ApiTags('Auth')
 @Controller('auth')

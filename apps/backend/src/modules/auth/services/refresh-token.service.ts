@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
+
 import { PrismaService } from '@backend/database';
+import { RefreshTokenRotationStatus } from '@backend/modules/auth/interfaces';
+import type { RefreshTokenRotationResult } from '@backend/modules/auth/interfaces';
 import {
-  RefreshTokenRotationResult,
-  RefreshTokenRotationStatus,
-} from '@backend/modules/auth/interfaces';
-import {
-  CreateRefreshTokenInput,
   REFRESH_TOKEN_CREATED_SELECT,
   REFRESH_TOKEN_ROTATION_SELECT,
+} from '@backend/modules/auth/persistence';
+import type {
+  CreateRefreshTokenInput,
   RotateRefreshTokenInput,
 } from '@backend/modules/auth/persistence';
-import { Prisma } from '@erp/database';
+import type { Prisma } from '@erp/database';
 
 @Injectable()
 export class RefreshTokenService {
@@ -50,7 +51,7 @@ export class RefreshTokenService {
       }
 
       if (currentToken.usedAt !== null) {
-        await this.revokeFamily(transaction, session.id, now);
+        await this.revokeSessionAndTokens(transaction, session.id, now);
 
         return {
           status: RefreshTokenRotationStatus.REUSE_DETECTED,
@@ -74,7 +75,7 @@ export class RefreshTokenService {
       });
 
       if (consumed.count !== 1) {
-        await this.revokeFamily(transaction, session.id, now);
+        await this.revokeSessionAndTokens(transaction, session.id, now);
 
         return {
           status: RefreshTokenRotationStatus.REUSE_DETECTED,
@@ -119,7 +120,7 @@ export class RefreshTokenService {
     });
   }
 
-  private async revokeFamily(
+  private async revokeSessionAndTokens(
     transaction: Prisma.TransactionClient,
     sessionId: string,
     revokedAt: Date,

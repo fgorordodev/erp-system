@@ -1,38 +1,47 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import ms from 'ms';
-import type { StringValue } from 'ms';
+import ms, { type StringValue } from 'ms';
 
 import { BusinessException, ErrorCode } from '@backend/common';
-import { JwtService } from '@backend/security/jwt';
-import { TokenService } from '@backend/security/token';
-import { UserMapper } from '@backend/modules/users';
 import {
   AUTH_ERROR_MESSAGES,
   AUTH_SESSION_DURATION,
   AUTH_TOKEN_CONFIG,
 } from '@backend/modules/auth/constants';
-import { LoginDto, RefreshDto } from '@backend/modules/auth/dto';
+import type { LoginDto, RefreshDto } from '@backend/modules/auth/dto';
 import {
-  LoginResponse,
   RefreshTokenRotationStatus,
-  SessionMetadata,
-  TokenPair,
+  type LoginResponse,
+  type SessionMetadata,
+  type TokenPair,
 } from '@backend/modules/auth/interfaces';
+import { UserMapper } from '@backend/modules/users';
+import { JwtService } from '@backend/security/jwt';
+import { TokenService } from '@backend/security/token';
+
 import { CredentialsService } from './credentials.service';
-import { SessionService } from './session.service';
 import { RefreshTokenService } from './refresh-token.service';
+import { SessionService } from './session.service';
 
 @Injectable()
 export class AuthenticationService {
+  private readonly accessTokenExpirationSeconds: number;
+
   constructor(
     private readonly credentialsService: CredentialsService,
     private readonly sessionService: SessionService,
     private readonly refreshTokenService: RefreshTokenService,
     private readonly tokenService: TokenService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-  ) {}
+    configService: ConfigService,
+  ) {
+    const accessTokenDuration =
+      configService.getOrThrow<StringValue>('JWT_ACCESS_EXPIRES');
+
+    this.accessTokenExpirationSeconds = Math.floor(
+      ms(accessTokenDuration) / 1000,
+    );
+  }
 
   async login(
     dto: LoginDto,
@@ -51,30 +60,31 @@ export class AuthenticationService {
 
     const refreshTokenHash = this.tokenService.hash(refreshToken);
 
-    const session = await this.sessionService.create({
+    const session = await this.sessionService.createWithRefreshToken({
       userId: user.id,
       expiresAt,
       userAgent: metadata.userAgent,
       ipAddress: metadata.ipAddress,
+      refreshTokenHash,
     });
 
-    await this.refreshTokenService.create({
-      sessionId: session.id,
-      tokenHash: refreshTokenHash,
-      expiresAt,
-    });
+    try {
+      const accessToken = await this.jwtService.generateAccessToken({
+        sub: user.id,
+        sessionId: session.id,
+      });
 
-    const accessToken = await this.jwtService.generateAccessToken({
-      sub: user.id,
-      sessionId: session.id,
-    });
+      return {
+        accessToken,
+        refreshToken,
+        expiresIn: this.accessTokenExpirationSeconds,
+        user: UserMapper.toResponse(user),
+      };
+    } catch (error: unknown) {
+      await this.sessionService.revokeById(session.id);
 
-    return {
-      accessToken,
-      refreshToken,
-      expiresIn: this.getAccessTokenExpirationSeconds(),
-      user: UserMapper.toResponse(user),
-    };
+      throw error;
+    }
   }
 
   async refresh(dto: RefreshDto): Promise<TokenPair> {
@@ -103,7 +113,7 @@ export class AuthenticationService {
     return {
       accessToken,
       refreshToken: newRefreshToken,
-      expiresIn: this.getAccessTokenExpirationSeconds(),
+      expiresIn: this.accessTokenExpirationSeconds,
     };
   }
 
@@ -116,25 +126,16 @@ export class AuthenticationService {
       ? AUTH_SESSION_DURATION.REMEMBER_ME_DAYS
       : AUTH_SESSION_DURATION.DEFAULT_DAYS;
 
-    const expiresAt = new Date();
+    const durationMilliseconds = durationDays * 24 * 60 * 60 * 1000;
 
-    expiresAt.setDate(expiresAt.getDate() + durationDays);
-
-    return expiresAt;
-  }
-
-  private getAccessTokenExpirationSeconds(): number {
-    const duration =
-      this.configService.getOrThrow<StringValue>('JWT_ACCESS_EXPIRES');
-
-    return Math.floor(ms(duration) / 1000);
+    return new Date(Date.now() + durationMilliseconds);
   }
 
   private invalidRefreshTokenException(): BusinessException {
     return new BusinessException(
       ErrorCode.INVALID_REFRESH_TOKEN,
       AUTH_ERROR_MESSAGES.INVALID_REFRESH_TOKEN,
-      401,
+      HttpStatus.UNAUTHORIZED,
     );
   }
 }

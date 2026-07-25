@@ -1,5 +1,8 @@
-import { UserResponseDto } from '@backend/modules/users/dto';
-import { UserAuthProjection, UserResponseProjection } from '../persistence';
+import type {
+  UserAuthProjection,
+  UserResponseProjection,
+} from '@backend/modules/users/persistence';
+import type { UserResponseDto } from '@backend/modules/users/dto';
 
 type UserMapperInput = UserResponseProjection | UserAuthProjection;
 
@@ -11,7 +14,9 @@ export class UserMapper {
       firstName: user.firstName,
       lastName: user.lastName,
       isActive: user.isActive,
-      roles: user.roles.map(({ role }) => ({ name: role.name })),
+      roles: user.roles.map(({ role }) => ({
+        name: role.name,
+      })),
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

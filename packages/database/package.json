@@ -12,11 +12,13 @@
     }
   },
   "scripts": {
-    "dev": "tsc -p tsconfig.json --watch",
-    "build": "pnpm db:generate && tsc -p tsconfig.json",
+    "dev": "pnpm db:generate && tsc -p tsconfig.json --watch",
+    "build": "pnpm clean && pnpm db:generate && tsc -p tsconfig.json",
     "typecheck": "pnpm db:generate && tsc -p tsconfig.json --noEmit",
     "clean": "rimraf dist",
     "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:status": "prisma migrate status",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",

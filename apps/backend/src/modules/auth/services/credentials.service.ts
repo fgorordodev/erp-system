@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 
 import { BusinessException, ErrorCode } from '@backend/common';
-import { HashService } from '@backend/security/crypto';
-import { UserAuthProjection, UsersService } from '@backend/modules/users';
 import { AUTH_ERROR_MESSAGES } from '@backend/modules/auth/constants';
+import { type UserAuthProjection, UsersService } from '@backend/modules/users';
+import { HashService } from '@backend/security/crypto';
 
 @Injectable()
 export class CredentialsService {
@@ -35,7 +35,7 @@ export class CredentialsService {
     return new BusinessException(
       ErrorCode.INVALID_CREDENTIALS,
       AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS,
-      401,
+      HttpStatus.UNAUTHORIZED,
     );
   }
 }

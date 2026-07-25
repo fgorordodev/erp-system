@@ -29,28 +29,18 @@ export const USER_AUTH_SELECT = {
   firstName: true,
   lastName: true,
   isActive: true,
-  deletedAt: true,
   createdAt: true,
   updatedAt: true,
   roles: {
     select: {
       role: {
         select: {
-          id: true,
           name: true,
-          permissions: {
-            select: {
-              permission: {
-                select: {
-                  id: true,
-                  name: true,
-                  description: true,
-                },
-              },
-            },
-          },
         },
       },
+    },
+    orderBy: {
+      assignedAt: 'asc',
     },
   },
 } satisfies Prisma.UserSelect;
