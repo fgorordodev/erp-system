@@ -5,12 +5,14 @@ import { HashService } from '@backend/security/crypto';
 import { UserAuthProjection, UsersService } from '@backend/modules/users';
 import { AUTH_ERROR_MESSAGES } from '@backend/modules/auth/constants';
 import { ErrorCode } from '@erp/api-contracts';
+import { AccountLockoutService } from './account-lockout.service';
 
 @Injectable()
 export class CredentialsService {
   constructor(
     private readonly usersService: UsersService,
     private readonly hashService: HashService,
+    private readonly accountLockoutService: AccountLockoutService,
   ) {}
 
   async validate(email: string, password: string): Promise<UserAuthProjection> {
@@ -20,13 +22,38 @@ export class CredentialsService {
       throw this.invalidCredentialsException();
     }
 
+    const isLocked = await this.accountLockoutService.isLocked(
+      user.id,
+      user.lockedUntil,
+    );
+
+    if (isLocked) {
+      throw this.invalidCredentialsException();
+    }
+
     const passwordMatches = await this.hashService.compare(
       password,
       user.password,
     );
 
-    if (!passwordMatches || !user.isActive) {
+    if (!passwordMatches) {
+      if (user.isActive) {
+        await this.accountLockoutService.registerFailure(user.id);
+      }
+
       throw this.invalidCredentialsException();
+    }
+
+    if (!user.isActive) {
+      throw this.invalidCredentialsException();
+    }
+
+    if (
+      user.failedLoginAttempts > 0 ||
+      user.lockedUntil !== null ||
+      user.lastFailedLoginAt !== null
+    ) {
+      await this.accountLockoutService.reset(user.id);
     }
 
     return user;

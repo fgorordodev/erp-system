@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { UsersModule } from '@backend/modules/users';
 import {
+  AccountLockoutService,
   AuthenticationService,
   CredentialsService,
   RefreshTokenService,
@@ -17,6 +18,7 @@ import { AuthController } from './auth.controller';
   controllers: [AuthController],
   providers: [
     AuthenticationService,
+    AccountLockoutService,
     CredentialsService,
     SessionService,
     JwtStrategy,
