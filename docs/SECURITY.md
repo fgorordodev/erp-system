@@ -1,86 +1,107 @@
 # Security
 
+[← Backend](BACKEND.md) · [Database →](DATABASE.md)
+
 ## Security model
 
-The API is protected by default. Routes are public only when explicitly marked with `@Public()`. Authenticated routes may additionally require roles or permissions.
+The backend combines short-lived JWT access tokens with persistent database sessions and one-time refresh tokens.
 
 ```mermaid
-graph TD
-    Request --> JwtGuard
-    JwtGuard --> Signature[Verify JWT signature and expiry]
-    Signature --> User[Load active, non-deleted user]
-    User --> Session[Load active, unexpired session]
-    Session --> RBAC[Resolve roles and permissions]
-    RBAC --> Controller
+sequenceDiagram
+    participant C as Client
+    participant API as Auth API
+    participant DB as PostgreSQL
+
+    C->>API: POST /api/auth/login
+    API->>DB: validate user and create session
+    API->>DB: store refresh-token hash
+    API-->>C: access token + refresh token
+
+    C->>API: POST /api/auth/refresh
+    API->>DB: find token hash
+    API->>DB: atomically mark token used
+    API->>DB: create replacement token
+    API-->>C: new token pair
+
+    alt used token submitted again
+      API->>DB: revoke session and token family
+      API-->>C: 401 Unauthorized
+    end
 ```
 
-## Credentials
+## Authentication
 
-Passwords are hashed with bcrypt before persistence. Authentication returns a generic invalid-credentials failure to reduce account enumeration. Password hashes never appear in response DTOs.
+Globally registered `JwtAuthGuard` protects routes unless `@Public()` is present.
 
-Pending controls include stronger configurable password policy, throttling, compromised-password checks and account recovery.
+Public endpoints:
 
-## Access tokens and sessions
+- `GET /api/health`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
 
-Access tokens are short-lived JWTs containing the user and session identifiers. A valid signature is insufficient by itself: every protected request validates current user and session state from the database.
+## Sessions
 
-This enables immediate invalidation after logout, account deactivation, user soft deletion, session expiration or server-side revocation.
+A session belongs to a user and records:
 
-## Refresh tokens
+- lifecycle timestamps;
+- expiration;
+- revocation;
+- last usage;
+- optional IP address and user agent;
+- refresh tokens.
 
-Refresh tokens are cryptographically random opaque values. Only hashes are stored.
+Logout revokes the current session and its refresh tokens.
 
-- Tokens are single-use.
-- Successful refresh creates a replacement and marks the previous token used.
-- Replacement relationships are recorded.
-- Unknown, used, revoked or expired tokens are rejected.
-- Clients must atomically replace their stored refresh token after refresh.
+## Refresh-token rotation
 
-Transport strategy for browser clients must be finalized before production. An HTTP-only secure cookie generally requires an explicit CSRF decision; client storage has different XSS trade-offs.
+Refresh tokens are stored as hashes, not plaintext.
 
-## RBAC
+Rotation is executed inside a Prisma transaction. A valid unused token is consumed once, linked to a replacement token and updates session activity. If reuse or a concurrent double-consumption is detected, the entire token family/session is revoked.
 
-Users may have multiple roles through `UserRole`. Roles receive explicit permissions through `RolePermission`. The JWT strategy resolves current database-backed roles and deduplicated permissions for the request.
+## Roles and permissions
 
-Controllers declare requirements using `@Roles()` and `@Permissions()`. Multiple permissions currently use AND semantics.
+Roles:
 
-## Encryption
+| Role | Permissions |
+|---|---|
+| `ADMIN` | `user:create`, `user:read`, `user:update`, `user:delete` |
+| `MANAGER` | `user:create`, `user:read`, `user:update` |
+| `EMPLOYEE` | `user:read` |
 
-`EncryptionService` uses AES-256-GCM with a random IV and authentication tag. `ENCRYPTION_KEY` must contain exactly 64 hexadecimal characters.
+A user may hold multiple roles through `UserRole`.
 
-Use reversible encryption only for data that must later be decrypted. Passwords and refresh tokens must be hashed instead.
+Authorization metadata:
 
-## HTTP hardening
+- `@Roles(...)`
+- `@Permissions(...)`
 
-- Helmet is enabled globally.
-- CORS uses the configured frontend origin and credentials policy.
-- DTO validation strips and rejects unknown fields.
-- Request IDs support log correlation.
-- Persistence implementation details are hidden by exception filters.
-- Swagger documents the bearer access-token scheme.
+Current user-administration endpoints use permission checks.
 
-## Secrets
+## Passwords and cryptography
 
-Never commit operational secrets. Generate independent values:
+- Passwords are hashed with bcrypt.
+- The seed hashes the administrator password with cost factor 12.
+- `ENCRYPTION_KEY` must contain exactly 64 hexadecimal characters for AES-256-GCM utilities.
+- JWT access and refresh secrets must each be at least 64 characters.
 
-```bash
-openssl rand -hex 64
-openssl rand -hex 64
-openssl rand -hex 32
-```
+## Web security
 
-Use a secret manager for deployed environments, rotate exposed values and keep development credentials isolated.
+- Helmet is enabled.
+- CORS is restricted to `FRONTEND_URL`.
+- DTO whitelisting and unknown-property rejection are enabled.
+- Swagger bearer authentication is configured.
 
-## Remaining production controls
+## Known gaps
 
-- rate limiting and brute-force protection;
-- password reset and email verification;
-- 2FA;
-- security event and administrative audit logs;
-- logout-all and user-visible session management;
-- automated auth/RBAC tests;
-- dependency, source and container scanning;
-- final browser token transport and CSRF policy;
-- final-administrator protection;
-- structured production observability;
-- backup, restore and incident-response procedures.
+The current repository does not yet include:
+
+- rate limiting;
+- brute-force lockout;
+- multi-factor authentication;
+- audit logging;
+- CSRF-specific controls for cookie-based authentication;
+- automated security scanning;
+- documented secret rotation;
+- tenant isolation.
+
+These must be addressed before a production launch.

@@ -1,101 +1,101 @@
 # Database
 
-## Technology
+[← Security](SECURITY.md) · [API →](API.md)
+
+## Stack
 
 - PostgreSQL 17
 - Prisma 7
 - `@prisma/adapter-pg`
-- Prisma Migrate
-- Prisma Client exported through `@erp/database`
+- Prisma Client generated into `packages/database/src/generated/prisma`
 
-The datasource URL is supplied through `prisma.config.ts` and environment configuration.
+## Ownership
 
-## Package lifecycle
+`@erp/database` owns:
 
-```bash
-pnpm db:generate
-pnpm db:migrate
-pnpm db:deploy
-pnpm db:seed
-pnpm db:studio
-```
+- `prisma/schema.prisma`
+- migrations
+- generated client
+- seed
+- database exports
 
-The `@erp/database` build runs Prisma generation before TypeScript compilation so generated runtime code and declarations exist in clean environments.
+Applications consume the package rather than owning separate Prisma schemas.
 
-## Current model
+## Entity model
 
 ```mermaid
 erDiagram
-    USER ||--o{ USER_ROLE : receives
+    USER ||--o{ USER_ROLE : has
     ROLE ||--o{ USER_ROLE : assigned
     ROLE ||--o{ ROLE_PERMISSION : grants
     PERMISSION ||--o{ ROLE_PERMISSION : included
-    USER ||--o{ SESSION : owns
+    USER ||--o{ SESSION : opens
     SESSION ||--o{ REFRESH_TOKEN : contains
-    REFRESH_TOKEN o|--o| REFRESH_TOKEN : replaced_by
+    REFRESH_TOKEN o|--o| REFRESH_TOKEN : replaces
 ```
+
+## Models
 
 ### User
 
-Stores identity, password hash, lifecycle timestamps, active status and soft-deletion state. Roles are assigned through `UserRole`.
+Identity, credentials, profile, active state and soft-deletion timestamp.
 
 ### Role and Permission
 
-Roles and permissions use unique names. `RolePermission` represents explicit many-to-many grants. `isSystem` identifies roles managed by the application seed.
+Named authorization concepts. `isSystem` distinguishes seeded system roles.
+
+### UserRole
+
+Composite-key junction enabling multiple roles per user.
+
+### RolePermission
+
+Composite-key junction mapping permissions to roles.
 
 ### Session
 
-Represents server-side access state. It records the owner, expiration, revocation, last usage and optional user-agent/IP metadata.
+Persistent login boundary with expiration, revocation and client metadata.
 
 ### RefreshToken
 
-Stores only a unique token hash. `usedAt`, `revokedAt` and `replacedByTokenId` support one-time rotation and replacement-chain tracking.
+Hashed one-time token record with expiry, usage, revocation and replacement-chain linkage.
 
-## Indexing and constraints
+## Migrations
 
-The schema includes:
+Development:
 
-- unique user email;
-- unique role and permission names;
-- composite IDs for RBAC join tables;
-- unique refresh-token hashes and replacement links;
-- indexes for active/deleted users;
-- indexes for session ownership, revocation and expiration;
-- indexes for refresh-token session, revocation, expiration and creation.
+```bash
+pnpm db:migrate
+```
 
-Foreign keys use cascading deletion for ownership and join records. Refresh-token replacement links use `SetNull` to avoid invalid chains when a replacement is removed.
+Deployment:
 
-## Seed behavior
+```bash
+pnpm db:deploy
+```
 
-The development seed is expected to be idempotent and creates/updates:
+Do not edit committed migration SQL after it has been applied to shared environments. Add a new migration instead.
 
-- system roles;
-- permission definitions;
-- role-permission assignments;
-- the administrator from `SEED_ADMIN_*` variables;
-- administrator role assignment through `UserRole`.
+## Seed
 
-Never use development seed credentials in a deployed environment.
+```bash
+pnpm db:seed
+```
 
-## Migration policy
+The seed is idempotent and upserts:
 
-1. Change `schema.prisma`.
-2. Create a named development migration.
-3. Inspect generated SQL.
-4. Update seed, projections and API contracts as needed.
-5. Run generation and the full quality gate.
-6. Commit schema and migration together.
+- all permission definitions;
+- `ADMIN`, `MANAGER`, `EMPLOYEE`;
+- role-permission mappings;
+- the development administrator;
+- the administrator's `ADMIN` role assignment.
 
-Do not rewrite migrations already applied to shared environments. Use `pnpm db:deploy` outside local development.
+The seed depends on `SEED_ADMIN_*` values. These variables are used by the seed script but are not part of backend runtime validation.
 
-## Pending database decisions
+## Operational cautions
 
-Before business modules are added, define:
-
-- organization/tenant ownership;
-- branch or warehouse boundaries;
-- audit event storage;
-- money and currency conventions;
-- document numbering and concurrency rules;
-- archival and retention policies;
-- backup, restore and disaster-recovery procedures.
+- Never use example credentials in production.
+- Back up the database before destructive migrations.
+- Run `db:deploy`, not `db:migrate`, in deployment environments.
+- Treat generated Prisma code as build output.
+- Review historical migrations before resetting a non-local database.

@@ -1,115 +1,124 @@
 # Architecture
 
+[← Documentation index](README.md) · [Backend →](BACKEND.md)
+
 ## Overview
 
-ERP System is a pnpm/Turborepo monorepo. Applications own delivery concerns, while internal packages own reusable build-time or persistence capabilities.
+ERP System is a pnpm/Turborepo monorepo containing two applications and four shared packages. The implemented milestone is an identity and security foundation for future ERP modules.
 
 ```mermaid
-graph TD
-    Workspace --> Backend[apps/backend]
-    Workspace --> Frontend[apps/frontend]
-    Workspace --> Database[packages/database]
-    Workspace --> TSConfig[packages/tsconfig]
-    Backend --> Database
-    Backend --> TSConfig
-    Frontend --> TSConfig
+flowchart TB
+    subgraph Apps
+      FE["apps/frontend\nReact + Vite"]
+      BE["apps/backend\nNestJS"]
+    end
+
+    subgraph Packages
+      Contracts["@erp/api-contracts"]
+      RBAC["@erp/rbac"]
+      Database["@erp/database"]
+      TS["@erp/tsconfig"]
+    end
+
+    PG[("PostgreSQL")]
+
+    FE -. future typed usage .-> Contracts
+    BE --> Contracts
+    BE --> RBAC
+    BE --> Database
+    RBAC --> TS
+    Contracts --> TS
+    Database --> RBAC
+    Database --> TS
+    Database --> PG
 ```
 
-## Workspace boundaries
+## Architectural boundaries
 
-### `apps/backend`
+### Applications
 
-NestJS API organized around domain capabilities and cross-cutting infrastructure.
+`apps/backend` owns HTTP transport, application workflows, security integration and process bootstrap.
 
-- `common`: filters, interceptors, middleware, exceptions and response contracts.
-- `config`: environment and Swagger configuration.
-- `database`: Nest provider integrating `@erp/database`.
-- `modules`: application capabilities such as auth, users and health.
-- `security`: reusable JWT, token, crypto, guard, decorator and RBAC infrastructure.
+`apps/frontend` is currently an independent React/Vite shell. It does not yet implement authentication or ERP screens.
 
-### `apps/frontend`
+### Packages
 
-React 19 + Vite 6 application shell. It is intentionally minimal while backend contracts and security foundations stabilize.
+Shared packages contain code that should not be coupled to a specific application lifecycle:
 
-### `packages/database`
+- API error contracts
+- Role and permission definitions
+- Prisma schema/client
+- Shared TypeScript configuration
 
-Single persistence source of truth: Prisma schema, migrations, seed, generated client and package exports. Consumers import from `@erp/database` rather than generated paths.
-
-### `packages/tsconfig`
-
-Shared TypeScript bases for Node/Nest and React projects.
-
-## Authentication and security separation
-
-Authentication is a business workflow; security contains reusable enforcement mechanisms.
+## Backend request lifecycle
 
 ```mermaid
 sequenceDiagram
     participant C as Client
-    participant A as AuthController
-    participant S as AuthenticationService
-    participant DB as PostgreSQL
-    participant J as JwtService
+    participant M as RequestIdMiddleware
+    participant A as JwtAuthGuard
+    participant R as RolesGuard
+    participant P as PermissionsGuard
+    participant V as ValidationPipe
+    participant Ctrl as Controller
+    participant S as Service
+    participant DB as Prisma/PostgreSQL
 
-    C->>A: POST /auth/login
-    A->>S: credentials + metadata
-    S->>DB: validate user
-    S->>DB: create session
-    S->>DB: store refresh-token hash
-    S->>J: sign access token
-    S-->>C: access + opaque refresh token
+    C->>M: HTTP request
+    M->>A: request + x-request-id
+    A->>R: authenticated principal
+    R->>P: role decision
+    P->>V: permission decision
+    V->>Ctrl: transformed DTO
+    Ctrl->>S: application command/query
+    S->>DB: typed persistence
+    DB-->>S: result
+    S-->>Ctrl: domain response
+    Ctrl-->>C: normalized API envelope
 ```
 
-- `modules/auth` owns login, refresh, logout, credentials, sessions and token rotation.
-- `security` owns guards, decorators, JWT signing/verification, token primitives, hashing, encryption and RBAC definitions.
+Global infrastructure registered by `AppModule`:
 
-## Protected request flow
+- `RequestIdMiddleware`
+- `LoggingInterceptor`
+- `ResponseInterceptor`
+- `PrismaExceptionFilter`
+- `HttpExceptionFilter`
+- `JwtAuthGuard`
+- `RolesGuard`
+- `PermissionsGuard`
 
-1. The global JWT guard skips only routes marked `@Public()`.
-2. Passport verifies the access-token signature and expiration.
-3. `JwtStrategy` loads the user and session from persistence.
-4. Revoked/expired sessions and inactive/deleted users are rejected.
-5. Roles and permissions are resolved from current database state.
-6. Role and permission guards evaluate route metadata.
-7. Controllers receive an `AuthenticatedUser` rather than a raw Prisma entity.
+## Design properties
 
-This makes the persisted session the revocation source of truth; a structurally valid JWT alone does not guarantee access.
+### Deny by authentication default
 
-## Persistence contracts
+Routes are protected globally. Public endpoints must opt out with `@Public()`.
 
-Each domain uses narrow inputs, selects/projections and mappers:
+### Explicit authorization
 
-```mermaid
-graph LR
-    DTO --> Service
-    Service --> PersistenceInput
-    PersistenceInput --> Prisma
-    Prisma --> Projection
-    Projection --> Mapper
-    Mapper --> ResponseDTO
-```
+Role and permission requirements are attached through decorators and evaluated by global guards.
 
-This limits accidental exposure of sensitive fields and reduces coupling to generated Prisma object shapes.
+### Persistence isolation
 
-## Build graph
+Prisma generation, schema, migrations and seed belong to `@erp/database`.
 
-`@erp/backend` imports `@erp/database`, whose public declarations live in `dist`. Clean CI runners therefore must generate Prisma Client and build the database package before type-aware lint or type checking analyzes the backend.
+### Feature-oriented backend
 
-Turborepo expresses this dependency using `^build` for build-dependent quality tasks. The CI workflow also builds `@erp/database` explicitly to make the clean-environment prerequisite visible.
+Implemented feature modules are:
 
-## Architectural principles
+- `auth`
+- `users`
+- `health`
 
-- High cohesion within capabilities and low coupling across modules.
-- Stable package exports rather than deep internal imports.
-- Dependency injection for runtime infrastructure.
-- Explicit DTO and persistence boundaries.
-- Deny-by-default authorization.
-- Forward-only database migrations.
-- Pragmatic layering; abstractions must solve demonstrated complexity.
+Reusable security infrastructure lives outside `modules/auth` under `security`.
 
 ## Current limitations
 
-- Organization/tenant ownership has not been designed.
-- Automated tests do not yet provide production confidence.
-- The frontend does not yet implement authentication or ERP workflows.
-- Observability, deployment and business-domain architecture remain future milestones.
+- No organization or tenant boundary.
+- No event bus or asynchronous processing.
+- No cache layer.
+- No business-domain modules.
+- Frontend/backend contracts are only minimally shared.
+- No deployment topology is committed.
+
+See [Roadmap](ROADMAP.md).

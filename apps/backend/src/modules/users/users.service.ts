@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
-import { BusinessException, ErrorCode } from '@backend/common';
+import { BusinessException } from '@backend/common';
 import { PrismaService } from '@backend/database';
-import { HashService, ROLES } from '@backend/security';
+import { HashService } from '@backend/security';
 import { UserMapper } from '@backend/modules/users/mappers';
 import {
   USER_AUTH_SELECT,
@@ -12,6 +12,8 @@ import {
   type UserAuthProjection,
 } from '@backend/modules/users/persistence';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
+import { ROLES } from '@erp/rbac';
+import { ErrorCode } from '@erp/api-contracts';
 
 @Injectable()
 export class UsersService {

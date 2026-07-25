@@ -1,0 +1,18 @@
+flowchart TB
+  FE["apps/frontend"]
+  BE["apps/backend"]
+  Contracts["@erp/api-contracts"]
+  RBAC["@erp/rbac"]
+  DBPkg["@erp/database"]
+  TS["@erp/tsconfig"]
+  DB[("PostgreSQL")]
+
+  FE -.-> Contracts
+  BE --> Contracts
+  BE --> RBAC
+  BE --> DBPkg
+  Contracts --> TS
+  RBAC --> TS
+  DBPkg --> RBAC
+  DBPkg --> TS
+  DBPkg --> DB

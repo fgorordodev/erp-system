@@ -2,10 +2,19 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/api-contracts"
+    },
+    {
       "path": "./packages/database"
     },
     {
+      "path": "./packages/rbac"
+    },
+    {
       "path": "./apps/backend"
+    },
+    {
+      "path": "./apps/frontend"
     }
   ]
 }

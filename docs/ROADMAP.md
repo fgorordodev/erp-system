@@ -1,95 +1,58 @@
 # Roadmap
 
-Status legend: ✅ completed · 🚧 in progress · ⬜ planned
+[← Operations](OPERATIONS.md) · [Documentation index →](README.md)
 
-## Phase 1 — Workspace and platform foundation
+This roadmap distinguishes repository evidence from proposed work.
 
-- ✅ Turborepo and pnpm workspaces
-- ✅ NestJS backend
-- ✅ React + Vite frontend shell
-- ✅ Shared TypeScript configuration package
-- ✅ PostgreSQL Docker Compose service
-- ✅ Prisma database package and migrations
-- ✅ Environment validation
-- ✅ Swagger/OpenAPI and health checks
-- ✅ Request correlation, logging and response/error normalization
-- ✅ GitHub Actions quality workflow foundation
+## Completed foundation
 
-## Phase 2 — Identity and access
+- pnpm/Turborepo monorepo
+- NestJS backend and React/Vite frontend shell
+- Shared TypeScript, RBAC, API-contract and database packages
+- PostgreSQL/Prisma schema and migrations
+- Seeded system roles and permissions
+- Seeded administrator
+- User CRUD/status/soft deletion
+- JWT authentication
+- Persistent sessions
+- Refresh-token rotation and reuse detection
+- Global guards, validation, logging, response and error handling
+- Swagger/OpenAPI and Postman assets
+- CI build/lint/type-check workflow
 
-- ✅ User CRUD and response mapping
-- ✅ Active/inactive status management
-- ✅ User soft deletion
-- ✅ Multi-role RBAC model
-- ✅ Permission and role guards
-- ✅ Login and credential validation
-- ✅ Persistent server-side sessions
-- ✅ Access tokens tied to sessions
-- ✅ Hashed refresh-token persistence
-- ✅ Atomic refresh-token rotation
-- ✅ Logout and immediate session revocation
-- ✅ Current-user endpoint
-- 🚧 Automated authentication and authorization tests
-- ⬜ Rate limiting and brute-force controls
-- ⬜ Password recovery and reset
-- ⬜ Email verification
-- ⬜ Two-factor authentication
-- ⬜ Session-management UI and logout-all capability
-- ⬜ Security audit events
+## Immediate engineering priorities
 
-## Phase 3 — Delivery quality
+1. Add meaningful integration and e2e coverage.
+2. Run tests and OpenAPI validation in CI.
+3. Add rate limiting and login abuse protections.
+4. Add audit logging for identity and administration events.
+5. Implement frontend authentication and protected routing.
+6. Add user pagination/filtering.
+7. Add explicit role-assignment administration.
 
-- 🚧 Reliable lint/typecheck/build/test CI sequence
-- ⬜ Unit tests for services, guards and mappers
-- ⬜ Integration tests for Prisma-backed workflows
-- ⬜ End-to-end API suite
-- ⬜ Coverage thresholds
-- ⬜ Dependency and CodeQL security scanning
-- ⬜ Container image build and vulnerability scanning
-- ⬜ Structured logging, metrics and tracing
-- ⬜ Deployment environments and migration strategy
+## Platform priorities
 
-## Phase 4 — Organization model
+- organization/tenant boundary;
+- invitations and onboarding;
+- password reset/change;
+- multi-factor authentication;
+- session/device management;
+- notification infrastructure;
+- observability and production deployment.
 
-This phase must precede most ERP business tables.
+## ERP domain roadmap
 
-- ⬜ Organization/tenant entity
-- ⬜ Membership and organization-scoped roles
-- ⬜ Branch/location model
-- ⬜ Warehouse ownership boundaries
-- ⬜ Tenant-aware uniqueness and query policies
-- ⬜ Audit and retention policy
+Recommended implementation order:
 
-## Phase 5 — Frontend foundation
+1. organizations and settings;
+2. products and categories;
+3. warehouses and inventory;
+4. customers and suppliers;
+5. purchasing;
+6. sales and orders;
+7. invoicing and payments;
+8. reporting;
+9. accounting integration;
+10. human resources.
 
-- ⬜ UI system and application layout
-- ⬜ API client and typed error handling
-- ⬜ Login and refresh lifecycle
-- ⬜ Protected routing and authorization-aware navigation
-- ⬜ Session expiration and logout UX
-- ⬜ User administration screens
-- ⬜ Accessibility and responsive baseline
-- ⬜ Frontend tests
-
-## Phase 6 — ERP business modules
-
-Recommended order:
-
-1. ⬜ Products, categories and units
-2. ⬜ Warehouses and inventory movements
-3. ⬜ Customers and suppliers
-4. ⬜ Purchases and receiving
-5. ⬜ Sales, orders and invoicing boundaries
-6. ⬜ Reporting and dashboards
-7. ⬜ Accounting integration/design
-
-Each module should define permissions, audit events, transactional invariants, API contracts and tests before being considered complete.
-
-## Immediate next milestone
-
-1. Make CI green from a clean checkout.
-2. Add auth/session unit and integration tests.
-3. Add user/RBAC end-to-end tests.
-4. Add rate limiting and security-event logging.
-5. Design organization and branch tenancy.
-6. Begin the frontend authentication flow.
+Each module should add schema, permissions, API contracts, tests and documentation as one coherent change.

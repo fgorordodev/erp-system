@@ -32,8 +32,8 @@ import {
 } from '@backend/modules/users/dto';
 import { CurrentUser, Permissions } from '@backend/security/decorator';
 import type { AuthenticatedUser } from '@backend/security/jwt/interfaces';
-import { PERMISSIONS } from '@backend/security/rbac';
 import { UsersService } from './users.service';
+import { PERMISSIONS } from '@erp/rbac';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
