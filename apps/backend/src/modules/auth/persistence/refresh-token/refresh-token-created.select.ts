@@ -1,6 +1,5 @@
-import { Prisma } from '@erp/database';
+import type { Prisma } from '@erp/database';
 
-export const REFRESH_TOKEN_CREATED_SELECT =
-  Prisma.validator<Prisma.RefreshTokenSelect>()({
-    id: true,
-  });
+export const REFRESH_TOKEN_CREATED_SELECT = {
+  id: true,
+} satisfies Prisma.RefreshTokenSelect;
