@@ -30,6 +30,11 @@ export const USER_AUTH_SELECT = {
   lastName: true,
   isActive: true,
   deletedAt: true,
+
+  failedLoginAttempts: true,
+  lockedUntil: true,
+  lastFailedLoginAt: true,
+
   createdAt: true,
   updatedAt: true,
   roles: {

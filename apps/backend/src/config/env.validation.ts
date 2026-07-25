@@ -141,6 +141,26 @@ export const envSchema = z
       .int('THROTTLE_REFRESH_LIMIT must be an integer')
       .min(1, 'THROTTLE_REFRESH_LIMIT must be greater than 0')
       .default(10),
+
+    AUTH_MAX_FAILED_ATTEMPTS: z.coerce
+      .number()
+      .int('AUTH_MAX_FAILED_ATTEMPTS must be an integer')
+      .min(1, 'AUTH_MAX_FAILED_ATTEMPTS must be greater than 0')
+      .max(20, 'AUTH_MAX_FAILED_ATTEMPTS must be lower than or equal to 20')
+      .default(5),
+
+    AUTH_LOCKOUT_DURATION_MS: z.coerce
+      .number()
+      .int('AUTH_LOCKOUT_DURATION_MS must be an integer')
+      .min(
+        60_000,
+        'AUTH_LOCKOUT_DURATION_MS must be at least 60000 milliseconds',
+      )
+      .max(
+        86_400_000,
+        'AUTH_LOCKOUT_DURATION_MS must be lower than or equal to 86400000',
+      )
+      .default(900_000),
   })
   .passthrough()
   .superRefine((config, context) => {
