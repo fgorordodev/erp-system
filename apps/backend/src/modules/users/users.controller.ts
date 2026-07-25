@@ -33,7 +33,8 @@ import {
 import { Permissions } from '@backend/security/decorator';
 import { UsersService } from './users.service';
 import { PERMISSIONS } from '@erp/rbac';
-import { type AuthenticatedUser, CurrentUser } from '@backend/modules/auth';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
