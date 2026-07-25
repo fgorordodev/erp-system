@@ -1,3 +1,7 @@
 export * from './inputs';
-export * from './user.select';
-export type * from './user.projection';
+export { USER_AUTH_SELECT, USER_RESPONSE_SELECT } from './user.select';
+export type {
+  UserAuthProjection,
+  UserResponseProjection,
+} from './user.projection';
+export { UsersRepository } from './user.repository';
