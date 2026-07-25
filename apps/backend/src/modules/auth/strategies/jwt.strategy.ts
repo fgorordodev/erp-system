@@ -4,13 +4,13 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { JwtPayload } from '../types/jwt-payload.type';
 import type { AuthenticatedUser } from '../types/authenticated-user.type';
-import { SessionService } from '../services/session.service';
+import { SessionRepository } from '../persistence';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     configService: ConfigService,
-    private readonly sessionService: SessionService,
+    private readonly sessionRepository: SessionRepository,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException();
     }
 
-    const session = await this.sessionService.findForAuthorization(
+    const session = await this.sessionRepository.findForAuthorization(
       payload.sessionId,
       payload.sub,
     );

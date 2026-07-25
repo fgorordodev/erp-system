@@ -1,29 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@backend/database';
+
 import {
   RefreshTokenRotationResult,
   RefreshTokenRotationStatus,
-} from '@backend/modules/auth/interfaces';
-import {
+} from '../interfaces';
+import type {
   CreateRefreshTokenInput,
-  REFRESH_TOKEN_CREATED_SELECT,
-  REFRESH_TOKEN_ROTATION_SELECT,
   RotateRefreshTokenInput,
-} from '@backend/modules/auth/persistence';
-import { Prisma } from '@erp/database';
+} from '../persistence';
+import { RefreshTokenRepository } from '../persistence/refresh-token/refresh-token.repository';
 
 @Injectable()
 export class RefreshTokenService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly refreshTokenRepository: RefreshTokenRepository,
+  ) {}
 
   rotate(input: RotateRefreshTokenInput): Promise<RefreshTokenRotationResult> {
-    return this.prisma.$transaction(async (transaction) => {
-      const currentToken = await transaction.refreshToken.findUnique({
-        where: {
-          tokenHash: input.currentTokenHash,
-        },
-        select: REFRESH_TOKEN_ROTATION_SELECT,
-      });
+    return this.refreshTokenRepository.withTransaction(async (transaction) => {
+      const currentToken = await this.refreshTokenRepository.findForRotation(
+        transaction,
+        input.currentTokenHash,
+      );
 
       if (!currentToken) {
         return {
@@ -50,7 +48,11 @@ export class RefreshTokenService {
       }
 
       if (currentToken.usedAt !== null) {
-        await this.revokeFamily(transaction, session.id, now);
+        await this.refreshTokenRepository.revokeFamily(
+          transaction,
+          session.id,
+          now,
+        );
 
         return {
           status: RefreshTokenRotationStatus.REUSE_DETECTED,
@@ -59,22 +61,18 @@ export class RefreshTokenService {
         };
       }
 
-      const consumed = await transaction.refreshToken.updateMany({
-        where: {
-          id: currentToken.id,
-          usedAt: null,
-          revokedAt: null,
-          expiresAt: {
-            gt: now,
-          },
-        },
-        data: {
-          usedAt: now,
-        },
-      });
+      const consumed = await this.refreshTokenRepository.consume(
+        transaction,
+        currentToken.id,
+        now,
+      );
 
-      if (consumed.count !== 1) {
-        await this.revokeFamily(transaction, session.id, now);
+      if (!consumed) {
+        await this.refreshTokenRepository.revokeFamily(
+          transaction,
+          session.id,
+          now,
+        );
 
         return {
           status: RefreshTokenRotationStatus.REUSE_DETECTED,
@@ -83,32 +81,24 @@ export class RefreshTokenService {
         };
       }
 
-      const newRefreshToken = await transaction.refreshToken.create({
-        data: {
+      const newRefreshToken =
+        await this.refreshTokenRepository.createReplacement(transaction, {
           sessionId: session.id,
           tokenHash: input.newTokenHash,
           expiresAt: session.expiresAt,
-        },
-        select: REFRESH_TOKEN_CREATED_SELECT,
-      });
+        });
 
-      await transaction.refreshToken.update({
-        where: {
-          id: currentToken.id,
-        },
-        data: {
-          replacedByTokenId: newRefreshToken.id,
-        },
-      });
+      await this.refreshTokenRepository.linkReplacement(
+        transaction,
+        currentToken.id,
+        newRefreshToken.id,
+      );
 
-      await transaction.session.update({
-        where: {
-          id: session.id,
-        },
-        data: {
-          lastUsedAt: now,
-        },
-      });
+      await this.refreshTokenRepository.touchSession(
+        transaction,
+        session.id,
+        now,
+      );
 
       return {
         status: RefreshTokenRotationStatus.ROTATED,
@@ -119,39 +109,7 @@ export class RefreshTokenService {
     });
   }
 
-  private async revokeFamily(
-    transaction: Prisma.TransactionClient,
-    sessionId: string,
-    revokedAt: Date,
-  ): Promise<void> {
-    await transaction.session.updateMany({
-      where: {
-        id: sessionId,
-        revokedAt: null,
-      },
-      data: {
-        revokedAt,
-      },
-    });
-
-    await transaction.refreshToken.updateMany({
-      where: {
-        sessionId,
-        revokedAt: null,
-      },
-      data: {
-        revokedAt,
-      },
-    });
-  }
-
-  async create(input: CreateRefreshTokenInput): Promise<void> {
-    await this.prisma.refreshToken.create({
-      data: {
-        sessionId: input.sessionId,
-        tokenHash: input.tokenHash,
-        expiresAt: input.expiresAt,
-      },
-    });
+  create(input: CreateRefreshTokenInput): Promise<void> {
+    return this.refreshTokenRepository.create(input);
   }
 }

@@ -18,17 +18,17 @@ import {
   TokenPair,
 } from '@backend/modules/auth/interfaces';
 import { CredentialsService } from './credentials.service';
-import { SessionService } from './session.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { ErrorCode } from '@erp/api-contracts';
 import { SecureTokenService } from '@backend/crypto';
 import { AccessTokenService } from './access-token.service';
+import { SessionRepository } from '../persistence';
 
 @Injectable()
 export class AuthenticationService {
   constructor(
     private readonly credentialsService: CredentialsService,
-    private readonly sessionService: SessionService,
+    private readonly sessionRepository: SessionRepository,
     private readonly refreshTokenService: RefreshTokenService,
     private readonly secureTokenService: SecureTokenService,
     private readonly accessTokenService: AccessTokenService,
@@ -52,7 +52,7 @@ export class AuthenticationService {
 
     const refreshTokenHash = this.secureTokenService.hash(refreshToken);
 
-    const session = await this.sessionService.create({
+    const session = await this.sessionRepository.create({
       userId: user.id,
       expiresAt,
       userAgent: metadata.userAgent,
@@ -109,7 +109,7 @@ export class AuthenticationService {
   }
 
   async logout(sessionId: string): Promise<void> {
-    await this.sessionService.revokeById(sessionId);
+    await this.sessionRepository.revokeById(sessionId);
   }
 
   private getSessionExpiration(rememberMe: boolean): Date {

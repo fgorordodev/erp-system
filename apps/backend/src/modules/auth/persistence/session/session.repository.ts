@@ -1,18 +1,21 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '@backend/database';
+
 import {
   SESSION_AUTHORIZATION_SELECT,
   SESSION_SELECT,
   SESSION_VALIDATION_SELECT,
-  type CreateSessionInput,
-  type SessionAuthorizationProjection,
-  type SessionProjection,
-  type SessionValidationProjection,
-} from '@backend/modules/auth/persistence/session';
+} from './session.select';
+import type {
+  SessionAuthorizationProjection,
+  SessionProjection,
+  SessionValidationProjection,
+} from './session.projection';
+import type { CreateSessionInput } from './inputs';
 
 @Injectable()
-export class SessionService {
+export class SessionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   create(input: CreateSessionInput): Promise<SessionProjection> {
