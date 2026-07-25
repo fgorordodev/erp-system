@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
-import { BusinessException, ErrorCode } from '@backend/common';
+import { BusinessException } from '@backend/common';
 import { HashService } from '@backend/security/crypto';
 import { UserAuthProjection, UsersService } from '@backend/modules/users';
 import { AUTH_ERROR_MESSAGES } from '@backend/modules/auth/constants';
+import { ErrorCode } from '@erp/api-contracts';
 
 @Injectable()
 export class CredentialsService {
