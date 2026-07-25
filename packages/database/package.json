@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsc -p tsconfig.json --watch",
+    "watch": "tsc -p tsconfig.json --watch",
     "build": "pnpm run db:generate && tsc -p tsconfig.json",
     "typecheck": "pnpm run db:generate && tsc -p tsconfig.json --noEmit",
     "clean": "rimraf dist",
