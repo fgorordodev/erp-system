@@ -10,7 +10,7 @@ import {
   RequestIdMiddleware,
   ResponseInterceptor,
 } from '@backend/common';
-import { validateEnv } from '@backend/config';
+import { throttlerConfig, validateEnv } from '@backend/config';
 import { DatabaseModule } from '@backend/database';
 import { AuthModule, HealthModule, UsersModule } from '@backend/modules';
 import {
@@ -19,6 +19,7 @@ import {
   RolesGuard,
   SecurityModule,
 } from '@backend/security';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import {
       envFilePath: ['../../.env', '.env'],
       validate: validateEnv,
     }),
+    ThrottlerModule.forRootAsync(throttlerConfig),
     LoggerModule,
     DatabaseModule,
     SecurityModule,
@@ -50,6 +52,10 @@ import {
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     {
       provide: APP_GUARD,
