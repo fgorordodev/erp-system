@@ -13,13 +13,15 @@ import {
 import { throttlerConfig, validateEnv } from '@backend/config';
 import { DatabaseModule } from '@backend/database';
 import { AuthModule, HealthModule, UsersModule } from '@backend/modules';
-import { SecurityModule } from '@backend/security';
 
 import { JwtAuthGuard } from '@backend/modules/auth';
 
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { RolesGuard } from './security/guards/roles.guard';
-import { PermissionsGuard } from './security/guards/permissions.guard';
+import {
+  AuthorizationModule,
+  PermissionsGuard,
+  RolesGuard,
+} from './modules/authorization';
 
 @Module({
   imports: [
@@ -31,10 +33,10 @@ import { PermissionsGuard } from './security/guards/permissions.guard';
     ThrottlerModule.forRootAsync(throttlerConfig),
     LoggerModule,
     DatabaseModule,
-    SecurityModule,
     HealthModule,
     UsersModule,
     AuthModule,
+    AuthorizationModule,
   ],
   providers: [
     {
@@ -63,11 +65,11 @@ import { PermissionsGuard } from './security/guards/permissions.guard';
     },
     {
       provide: APP_GUARD,
-      useClass: RolesGuard,
+      useExisting: RolesGuard,
     },
     {
       provide: APP_GUARD,
-      useClass: PermissionsGuard,
+      useExisting: PermissionsGuard,
     },
   ],
 })

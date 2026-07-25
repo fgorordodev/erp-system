@@ -30,11 +30,11 @@ import {
   UpdateUserStatusDto,
   UserResponseDto,
 } from '@backend/modules/users/dto';
-import { Permissions } from '@backend/security/decorator';
 import { UsersService } from './users.service';
 import { PERMISSIONS } from '@erp/rbac';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
+import { Permissions } from '../authorization';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
