@@ -1,0 +1,11 @@
+sequenceDiagram
+  participant C as Client
+  participant API as Auth API
+  participant DB as PostgreSQL
+  C->>API: Login
+  API->>DB: Create session + refresh-token hash
+  API-->>C: Access + refresh token
+  C->>API: Refresh
+  API->>DB: Atomically consume old token
+  API->>DB: Create replacement token
+  API-->>C: New token pair
