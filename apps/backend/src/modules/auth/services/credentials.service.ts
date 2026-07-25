@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 import { BusinessException } from '@backend/common';
-import { UserAuthProjection, UsersService } from '@backend/modules/users';
 import { AUTH_ERROR_MESSAGES } from '@backend/modules/auth/constants';
 import { ErrorCode } from '@erp/api-contracts';
 import { AccountLockoutService } from './account-lockout.service';
 import { PasswordHasherService } from '@backend/crypto';
+import { UserAuthProjection, UsersService } from '@backend/modules/users';
 
 @Injectable()
 export class CredentialsService {

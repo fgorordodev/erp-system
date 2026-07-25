@@ -16,9 +16,8 @@ import { AccountLockoutService } from './services/account-lockout.service';
 import { CredentialsService } from './services/credentials.service';
 import { RefreshTokenService } from './services/refresh-token.service';
 import { PasswordResetNotificationService } from './services/password-reset-notification.service';
-import { PasswordResetTokenService } from './services/password-reset-token.service';
 import { UsersModule } from '../users';
-import { SessionRepository } from './persistence';
+import { PasswordResetTokenRepository, SessionRepository } from './persistence';
 import { RefreshTokenRepository } from './persistence/refresh-token/refresh-token.repository';
 
 @Module({
@@ -54,7 +53,7 @@ import { RefreshTokenRepository } from './persistence/refresh-token/refresh-toke
     RefreshTokenService,
     PasswordResetService,
     PasswordResetNotificationService,
-    PasswordResetTokenService,
+    PasswordResetTokenRepository,
     SessionRepository,
     RefreshTokenRepository,
   ],
