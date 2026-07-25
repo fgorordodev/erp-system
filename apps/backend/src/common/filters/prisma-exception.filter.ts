@@ -6,8 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@erp/database';
 import { Request, Response } from 'express';
-
-import { ErrorCode } from '@backend/common/exceptions';
+import { ErrorCode } from '@erp/api-contracts';
 
 interface PrismaErrorResponse {
   status: HttpStatus;

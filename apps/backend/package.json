@@ -2,21 +2,27 @@
   "name": "@erp/backend",
   "version": "0.0.1",
   "private": true,
+  "type": "commonjs",
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "nest start",
     "start:prod": "cross-env TS_NODE_BASEURL=./dist node -r tsconfig-paths/register dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
-    "test": "jest --passWithNoTests",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
     "lint": "eslint \"{src,test}/**/*.ts\"",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
     "clean": "rimraf dist",
     "swagger:generate": "tsx scripts/generate-openapi.ts",
-    "swagger:validate": "pnpm swagger:generate && tsx scripts/validate-openapi.ts",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm swagger:validate"
+    "swagger:validate": "pnpm run swagger:generate && tsx scripts/validate-openapi.ts",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run swagger:validate"
   },
   "dependencies": {
+    "@erp/api-contracts": "workspace:*",
+    "@erp/database": "workspace:*",
+    "@erp/rbac": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
@@ -37,8 +43,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
-    "zod": "^4.4.3",
-    "@erp/database": "workspace:*"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -53,12 +58,14 @@
     "@types/node": "^24.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^7.0.0",
+    "cross-env": "^7.0.3",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^17.0.0",
     "jest": "^30.4.2",
     "prettier": "^3.4.2",
+    "rimraf": "^6.0.1",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.4.11",
@@ -66,11 +73,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.23.1",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.20.0",
-    "@erp/tsconfig": "workspace:*",
-    "rimraf": "^6.0.1",
-    "cross-env": "^7.0.3"
+    "typescript-eslint": "^8.20.0"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -91,6 +94,5 @@
     "moduleNameMapper": {
       "^@backend/(.*)$": "<rootDir>/$1"
     }
-  },
-  "type": "commonjs"
+  }
 }

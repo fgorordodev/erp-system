@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import type { StringValue } from 'ms';
 
-import { BusinessException, ErrorCode } from '@backend/common';
+import { BusinessException } from '@backend/common';
 import { JwtService } from '@backend/security/jwt';
 import { TokenService } from '@backend/security/token';
 import { UserMapper } from '@backend/modules/users';
@@ -22,6 +22,7 @@ import {
 import { CredentialsService } from './credentials.service';
 import { SessionService } from './session.service';
 import { RefreshTokenService } from './refresh-token.service';
+import { ErrorCode } from '@erp/api-contracts';
 
 @Injectable()
 export class AuthenticationService {

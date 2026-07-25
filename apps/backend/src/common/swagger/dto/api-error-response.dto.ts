@@ -1,6 +1,5 @@
+import { ErrorCode } from '@erp/api-contracts';
 import { ApiProperty } from '@nestjs/swagger';
-
-import { ErrorCode } from '@backend/common/exceptions';
 
 export class ApiErrorDetailDto {
   @ApiProperty({
