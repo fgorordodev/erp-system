@@ -1,31 +1,17 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { config } from 'dotenv';
-import { resolve } from 'node:path';
-import { env } from 'prisma/config';
-import { hash } from 'bcrypt';
-
-const PERMISSIONS = {
-  USER_CREATE: { name: 'user:create', description: 'Create users' },
-  USER_READ: { name: 'user:read', description: 'Read users' },
-  USER_UPDATE: { name: 'user:update', description: 'Update users' },
-  USER_DELETE: { name: 'user:delete', description: 'Delete users' },
-} as const;
-
-const ROLES = { ADMIN: 'ADMIN', MANAGER: 'MANAGER', EMPLOYEE: 'EMPLOYEE' } as const;
-
-const ROLE_DEFINITIONS = {
-  [ROLES.ADMIN]: { description: 'Administrator with full access', permissions: [...Object.values(PERMISSIONS)], isSystem: true },
-  [ROLES.MANAGER]: { description: 'Manager user', permissions: [PERMISSIONS.USER_READ, PERMISSIONS.USER_CREATE, PERMISSIONS.USER_UPDATE], isSystem: true },
-  [ROLES.EMPLOYEE]: { description: 'Default employee role', permissions: [PERMISSIONS.USER_READ], isSystem: true },
-} as const;
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { config } from "dotenv";
+import { resolve } from "node:path";
+import { env } from "prisma/config";
+import { hash } from "bcrypt";
+import { PERMISSIONS, ROLES, ROLE_DEFINITIONS } from "@erp/rbac";
 
 config({
-  path: resolve(__dirname, '../../../.env'),
+  path: resolve(__dirname, "../../../.env"),
 });
 
 const adapter = new PrismaPg({
-  connectionString: env('DATABASE_URL'),
+  connectionString: env("DATABASE_URL"),
 });
 
 const prisma = new PrismaClient({
@@ -104,10 +90,10 @@ async function seedRoles() {
 }
 
 async function seedAdminUser(): Promise<void> {
-  const email = env('SEED_ADMIN_EMAIL').trim().toLowerCase();
-  const password = env('SEED_ADMIN_PASSWORD');
-  const firstName = env('SEED_ADMIN_FIRST_NAME');
-  const lastName = env('SEED_ADMIN_LAST_NAME');
+  const email = env("SEED_ADMIN_EMAIL").trim().toLowerCase();
+  const password = env("SEED_ADMIN_PASSWORD");
+  const firstName = env("SEED_ADMIN_FIRST_NAME");
+  const lastName = env("SEED_ADMIN_LAST_NAME");
 
   const adminRole = await prisma.role.findUnique({
     where: {
@@ -163,7 +149,7 @@ async function seedAdminUser(): Promise<void> {
 }
 
 async function main() {
-  console.log('🌱 Starting seed');
+  console.log("🌱 Starting seed");
 
   await seedPermissions();
 
@@ -171,12 +157,12 @@ async function main() {
 
   await seedAdminUser();
 
-  console.log('✅ Seed completed');
+  console.log("✅ Seed completed");
 }
 
 main()
   .catch((error: unknown) => {
-    console.error('❌ Seed failed', error);
+    console.error("❌ Seed failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {
