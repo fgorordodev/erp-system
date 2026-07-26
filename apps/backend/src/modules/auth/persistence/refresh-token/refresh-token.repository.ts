@@ -5,14 +5,10 @@ import type { Prisma } from '@erp/database';
 
 import { REFRESH_TOKEN_ROTATION_SELECT } from './refresh-token-rotation.select';
 import { REFRESH_TOKEN_CREATED_SELECT } from './refresh-token-created.select';
-
-type RefreshTokenRotationProjection = Prisma.RefreshTokenGetPayload<{
-  select: typeof REFRESH_TOKEN_ROTATION_SELECT;
-}>;
-
-type RefreshTokenCreatedProjection = Prisma.RefreshTokenGetPayload<{
-  select: typeof REFRESH_TOKEN_CREATED_SELECT;
-}>;
+import type {
+  RefreshTokenCreatedProjection,
+  RefreshTokenRotationProjection,
+} from './refresh-token.projection';
 
 @Injectable()
 export class RefreshTokenRepository {

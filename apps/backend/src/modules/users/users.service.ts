@@ -8,7 +8,7 @@ import { PasswordHasherService } from '@backend/crypto';
 
 import { UserMapper } from './mappers/user.mapper';
 import type { UserAuthProjection } from './persistence/user.projection';
-import { UsersRepository } from './persistence/user.repository';
+import { UserRepository } from './persistence/user.repository';
 import { UserResponseDto } from './dto/user-response.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -21,7 +21,7 @@ type UserDatabaseClient = Pick<Prisma.TransactionClient, 'user'>;
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly usersRepository: UsersRepository,
+    private readonly usersRepository: UserRepository,
     private readonly passwordHasher: PasswordHasherService,
   ) {}
 

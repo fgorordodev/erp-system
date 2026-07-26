@@ -4,7 +4,7 @@ import { RefreshTokenRepository } from '../persistence/refresh-token/refresh-tok
 import {
   RefreshTokenRotationResult,
   RefreshTokenRotationStatus,
-} from '../interfaces/refresh-token-rotation-result';
+} from '../interfaces/refresh-token-rotation.result';
 import { RotateRefreshTokenInput } from '../persistence/refresh-token/inputs/rotate-refresh-token.input';
 
 @Injectable()

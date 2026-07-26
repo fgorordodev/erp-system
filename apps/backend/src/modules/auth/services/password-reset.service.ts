@@ -5,13 +5,13 @@ import { ErrorCode } from '@erp/api-contracts';
 
 import { PasswordHasherService, SecureTokenService } from '@backend/crypto';
 
-import { UsersService } from '../../users/users.service';
 import { PasswordResetNotificationService } from './password-reset-notification.service';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { AUTH_ERROR_MESSAGES } from '../constants/auth.constants';
 import { PasswordResetTokenRepository } from '../persistence/password-reset-token/password-reset-token.repository';
 import { SessionRepository } from '../persistence/session/session.repository';
 import { BusinessException } from '@backend/common';
+import { UsersService } from '@backend/modules/users';
 
 @Injectable()
 export class PasswordResetService {

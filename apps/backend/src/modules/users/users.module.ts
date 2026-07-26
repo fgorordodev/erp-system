@@ -5,12 +5,12 @@ import { DatabaseModule } from '@backend/database';
 
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { UsersRepository } from './persistence/user.repository';
+import { UserRepository } from './persistence/user.repository';
 
 @Module({
   imports: [DatabaseModule, CryptoModule],
   controllers: [UsersController],
-  providers: [UsersService, UsersRepository],
+  providers: [UsersService, UserRepository],
   exports: [UsersService],
 })
 export class UsersModule {}

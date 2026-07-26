@@ -1,6 +1,5 @@
-import { normalizeEmail } from '@backend/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+
 import {
   IsBoolean,
   IsEmail,
@@ -16,7 +15,6 @@ export class LoginDto {
     format: 'email',
   })
   @IsEmail()
-  @Transform(normalizeEmail)
   email!: string;
 
   @ApiProperty({

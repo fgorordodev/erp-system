@@ -1,3 +1,4 @@
+import { AuthenticatedUser } from '@backend/modules/auth/types/authenticated-user.type';
 import {
   CanActivate,
   ExecutionContext,
@@ -5,9 +6,8 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-
-import type { AuthenticatedUser } from '@backend/modules/auth/types/authenticated-user.type';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+import type { Request } from 'express';
 
 interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;

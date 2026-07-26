@@ -10,15 +10,15 @@ import { SecureTokenService } from '@backend/crypto';
 import { AccessTokenService } from './access-token.service';
 import type { SessionMetadata } from '../interfaces/session-metadata.interface';
 import { LoginDto } from '../dto/login.dto';
-import type { LoginResponse } from '../interfaces/login-response.interface';
+import type { LoginResult } from '../interfaces/login.result';
 import {
   AUTH_ERROR_MESSAGES,
   AUTH_SESSION_DURATION,
   AUTH_TOKEN_CONFIG,
 } from '../constants/auth.constants';
 import { RefreshDto } from '../dto/refresh.dto';
-import type { TokenPair } from '../interfaces/token-pair.interface';
-import { RefreshTokenRotationStatus } from '../interfaces/refresh-token-rotation-result';
+import type { TokenPairResult } from '../interfaces/token-pair.result';
+import { RefreshTokenRotationStatus } from '../interfaces/refresh-token-rotation.result';
 import { BusinessException } from '@backend/common';
 import { SessionRepository } from '../persistence/session/session.repository';
 import { UserMapper } from '@backend/modules/users';
@@ -34,10 +34,7 @@ export class AuthenticationService {
     private readonly configService: ConfigService,
   ) {}
 
-  async login(
-    dto: LoginDto,
-    metadata: SessionMetadata,
-  ): Promise<LoginResponse> {
+  async login(dto: LoginDto, metadata: SessionMetadata): Promise<LoginResult> {
     const user = await this.credentialsService.validate(
       dto.email,
       dto.password,
@@ -72,7 +69,7 @@ export class AuthenticationService {
     };
   }
 
-  async refresh(dto: RefreshDto): Promise<TokenPair> {
+  async refresh(dto: RefreshDto): Promise<TokenPairResult> {
     const currentTokenHash = this.secureTokenService.hash(dto.refreshToken);
 
     const newRefreshToken = this.secureTokenService.generate(

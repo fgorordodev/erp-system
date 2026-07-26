@@ -16,7 +16,7 @@ import { normalizeEmail } from '@backend/common';
 type UserDatabaseClient = Pick<Prisma.TransactionClient, 'user'>;
 
 @Injectable()
-export class UsersRepository {
+export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findRoleIdByName(roleName: string): Promise<string | null> {
