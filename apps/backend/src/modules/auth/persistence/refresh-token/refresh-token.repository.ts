@@ -3,8 +3,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@backend/database';
 import type { Prisma } from '@erp/database';
 
-import { REFRESH_TOKEN_ROTATION_SELECT } from './refresh-token-rotation.select';
-import { REFRESH_TOKEN_CREATED_SELECT } from './refresh-token-created.select';
+import {
+  REFRESH_TOKEN_CREATED_SELECT,
+  REFRESH_TOKEN_ROTATION_SELECT,
+} from './refresh-token.select';
+
 import type {
   RefreshTokenCreatedProjection,
   RefreshTokenRotationProjection,
