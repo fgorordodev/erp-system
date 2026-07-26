@@ -4,22 +4,22 @@ export enum RefreshTokenRotationStatus {
   REUSE_DETECTED = 'REUSE_DETECTED',
 }
 
-export interface RotatedRefreshToken {
+export type RotatedRefreshToken = {
   status: RefreshTokenRotationStatus.ROTATED;
   sessionId: string;
   userId: string;
   newRefreshTokenId: string;
-}
+};
 
-export interface InvalidRefreshToken {
+export type InvalidRefreshToken = {
   status: RefreshTokenRotationStatus.INVALID;
-}
+};
 
-export interface ReusedRefreshToken {
+export type ReusedRefreshToken = {
   status: RefreshTokenRotationStatus.REUSE_DETECTED;
   sessionId: string;
   userId: string;
-}
+};
 
 export type RefreshTokenRotationResult =
   RotatedRefreshToken | InvalidRefreshToken | ReusedRefreshToken;
