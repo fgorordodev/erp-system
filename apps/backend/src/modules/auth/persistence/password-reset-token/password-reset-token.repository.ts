@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '@backend/database';
 import type { Prisma } from '@erp/database';
-
-import type { CreatePasswordResetTokenInput } from './inputs';
-import type { PasswordResetTokenProjection } from './password-reset-token.projection';
-import { PASSWORD_RESET_TOKEN_SELECT } from './password-reset-token.select';
+import { CreatePasswordResetTokenInput } from './inputs/create-password-reset-token.input';
 
 type PasswordResetTokenIdentity = {
   id: string;
@@ -22,39 +19,15 @@ export class PasswordResetTokenRepository {
     return this.prisma.$transaction(operation);
   }
 
-  create(
-    input: CreatePasswordResetTokenInput,
-  ): Promise<PasswordResetTokenProjection> {
-    return this.prisma.passwordResetToken.create({
+  async create(input: CreatePasswordResetTokenInput): Promise<void> {
+    await this.prisma.passwordResetToken.create({
       data: {
         userId: input.userId,
         tokenHash: input.tokenHash,
         expiresAt: input.expiresAt,
       },
-      select: PASSWORD_RESET_TOKEN_SELECT,
     });
   }
-
-  findValidByHash(
-    tokenHash: string,
-  ): Promise<PasswordResetTokenProjection | null> {
-    return this.prisma.passwordResetToken.findFirst({
-      where: {
-        tokenHash,
-        usedAt: null,
-        revokedAt: null,
-        expiresAt: {
-          gt: new Date(),
-        },
-        user: {
-          isActive: true,
-          deletedAt: null,
-        },
-      },
-      select: PASSWORD_RESET_TOKEN_SELECT,
-    });
-  }
-
   findValidByHashForUpdate(
     transaction: Prisma.TransactionClient,
     tokenHash: string,

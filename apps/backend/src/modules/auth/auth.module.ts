@@ -16,10 +16,11 @@ import { AccountLockoutService } from './services/account-lockout.service';
 import { CredentialsService } from './services/credentials.service';
 import { RefreshTokenService } from './services/refresh-token.service';
 import { PasswordResetNotificationService } from './services/password-reset-notification.service';
-import { UsersModule } from '../users';
-import { SessionRepository } from './persistence';
+
 import { RefreshTokenRepository } from './persistence/refresh-token/refresh-token.repository';
-import { PasswordResetTokenRepository } from './persistence/password-reset-token';
+import { UsersModule } from '../users/users.module';
+import { SessionRepository } from './persistence/session/session.repository';
+import { PasswordResetTokenRepository } from './persistence/password-reset-token/password-reset-token.repository';
 
 @Module({
   imports: [

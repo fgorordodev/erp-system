@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@backend/database';
 import type { Prisma } from '@erp/database';
 
-import type { CreateRefreshTokenInput } from './inputs';
 import { REFRESH_TOKEN_ROTATION_SELECT } from './refresh-token-rotation.select';
 import { REFRESH_TOKEN_CREATED_SELECT } from './refresh-token-created.select';
 
@@ -129,16 +128,6 @@ export class RefreshTokenRepository {
       },
       data: {
         revokedAt,
-      },
-    });
-  }
-
-  async create(input: CreateRefreshTokenInput): Promise<void> {
-    await this.prisma.refreshToken.create({
-      data: {
-        sessionId: input.sessionId,
-        tokenHash: input.tokenHash,
-        expiresAt: input.expiresAt,
       },
     });
   }

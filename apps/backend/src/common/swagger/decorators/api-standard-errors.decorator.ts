@@ -5,8 +5,7 @@ import {
   ApiInternalServerErrorResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-
-import { ApiErrorResponseDto } from '@backend/common/swagger/dto';
+import { ApiErrorResponseDto } from '../dto/api-error-response.dto';
 
 export function ApiValidationError() {
   return ApiBadRequestResponse({

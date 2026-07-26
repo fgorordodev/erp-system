@@ -3,13 +3,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@backend/database';
 import type { Prisma } from '@erp/database';
 
-import type { CreateUserInput, UpdateUserInput } from './inputs';
 import type {
   UserAuthProjection,
   UserFailedLoginAttemptsProjection,
   UserResponseProjection,
 } from './user.projection';
 import { USER_AUTH_SELECT, USER_RESPONSE_SELECT } from './user.select';
+import { CreateUserInput } from './inputs/create-user.input';
+import { UpdateUserInput } from './inputs/update-user.input';
 
 type UserDatabaseClient = Pick<Prisma.TransactionClient, 'user'>;
 

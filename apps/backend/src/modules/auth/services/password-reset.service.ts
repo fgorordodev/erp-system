@@ -3,14 +3,14 @@ import { ConfigService } from '@nestjs/config';
 
 import { ErrorCode } from '@erp/api-contracts';
 
-import { BusinessException } from '@backend/common';
 import { PasswordHasherService, SecureTokenService } from '@backend/crypto';
 
 import { UsersService } from '../../users/users.service';
-import { AUTH_ERROR_MESSAGES } from '../constants';
-import { ResetPasswordDto } from '../dto';
 import { PasswordResetNotificationService } from './password-reset-notification.service';
-import { PasswordResetTokenRepository } from '../persistence/password-reset-token';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { AUTH_ERROR_MESSAGES } from '../constants/auth.constants';
+import { PasswordResetTokenRepository } from '../persistence/password-reset-token/password-reset-token.repository';
+import { BusinessException } from '@backend/common';
 
 @Injectable()
 export class PasswordResetService {

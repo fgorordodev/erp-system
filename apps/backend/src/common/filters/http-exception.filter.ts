@@ -7,8 +7,8 @@ import {
 
 import { Request, Response } from 'express';
 
-import { BusinessException } from '@backend/common/exceptions';
 import { ErrorCode } from '@erp/api-contracts';
+import { BusinessException } from '../exceptions/business.exception';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {

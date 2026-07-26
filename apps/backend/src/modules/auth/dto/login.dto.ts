@@ -1,3 +1,4 @@
+import { normalizeEmail } from '@backend/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
@@ -7,8 +8,6 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
-
-import { normalizeEmail } from '@backend/common';
 
 export class LoginDto {
   @ApiProperty({

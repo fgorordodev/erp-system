@@ -4,14 +4,17 @@ import { ErrorCode } from '@erp/api-contracts';
 import { ROLES } from '@erp/rbac';
 import type { Prisma } from '@erp/database';
 
-import { BusinessException } from '@backend/common';
 import { PasswordHasherService } from '@backend/crypto';
 
-import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
 import { UserMapper } from './mappers/user.mapper';
-import type { CreateUserInput, UpdateUserInput } from './persistence/inputs';
 import type { UserAuthProjection } from './persistence/user.projection';
-import { UsersRepository } from './persistence';
+import { UsersRepository } from './persistence/user.repository';
+import { UserResponseDto } from './dto/user-response.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { BusinessException } from '@backend/common';
+import { CreateUserInput } from './persistence/inputs/create-user.input';
+import { UpdateUserInput } from './persistence/inputs/update-user.input';
 
 type UserDatabaseClient = Pick<Prisma.TransactionClient, 'user'>;
 

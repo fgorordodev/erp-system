@@ -3,26 +3,26 @@ import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import type { StringValue } from 'ms';
 
-import { BusinessException } from '@backend/common';
 import { UserMapper } from '@backend/modules/users';
-import {
-  AUTH_ERROR_MESSAGES,
-  AUTH_SESSION_DURATION,
-  AUTH_TOKEN_CONFIG,
-} from '@backend/modules/auth/constants';
-import { LoginDto, RefreshDto } from '@backend/modules/auth/dto';
-import {
-  LoginResponse,
-  RefreshTokenRotationStatus,
-  SessionMetadata,
-  TokenPair,
-} from '@backend/modules/auth/interfaces';
+
 import { CredentialsService } from './credentials.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { ErrorCode } from '@erp/api-contracts';
 import { SecureTokenService } from '@backend/crypto';
 import { AccessTokenService } from './access-token.service';
-import { SessionRepository } from '../persistence';
+import { SessionMetadata } from '../interfaces/session-metadata.interface';
+import { LoginDto } from '../dto/login.dto';
+import { LoginResponse } from '../interfaces/login-response.interface';
+import {
+  AUTH_ERROR_MESSAGES,
+  AUTH_SESSION_DURATION,
+  AUTH_TOKEN_CONFIG,
+} from '../constants/auth.constants';
+import { RefreshDto } from '../dto/refresh.dto';
+import { TokenPair } from '../interfaces/token-pair.interface';
+import { RefreshTokenRotationStatus } from '../interfaces/refresh-token-rotation-result';
+import { BusinessException } from '@backend/common';
+import { SessionRepository } from '../persistence/session/session.repository';
 
 @Injectable()
 export class AuthenticationService {
@@ -52,17 +52,12 @@ export class AuthenticationService {
 
     const refreshTokenHash = this.secureTokenService.hash(refreshToken);
 
-    const session = await this.sessionRepository.create({
+    const session = await this.sessionRepository.createWithRefreshToken({
       userId: user.id,
       expiresAt,
       userAgent: metadata.userAgent,
       ipAddress: metadata.ipAddress,
-    });
-
-    await this.refreshTokenService.create({
-      sessionId: session.id,
-      tokenHash: refreshTokenHash,
-      expiresAt,
+      refreshTokenHash,
     });
 
     const accessToken = await this.accessTokenService.generate({

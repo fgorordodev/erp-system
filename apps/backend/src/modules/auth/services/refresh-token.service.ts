@@ -1,14 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
+import { RefreshTokenRepository } from '../persistence/refresh-token/refresh-token.repository';
 import {
   RefreshTokenRotationResult,
   RefreshTokenRotationStatus,
-} from '../interfaces';
-import type {
-  CreateRefreshTokenInput,
-  RotateRefreshTokenInput,
-} from '../persistence';
-import { RefreshTokenRepository } from '../persistence/refresh-token/refresh-token.repository';
+} from '../interfaces/refresh-token-rotation-result';
+import { RotateRefreshTokenInput } from '../persistence/refresh-token/inputs/rotate-refresh-token.input';
 
 @Injectable()
 export class RefreshTokenService {
@@ -107,9 +104,5 @@ export class RefreshTokenService {
         newRefreshTokenId: newRefreshToken.id,
       };
     });
-  }
-
-  create(input: CreateRefreshTokenInput): Promise<void> {
-    return this.refreshTokenRepository.create(input);
   }
 }

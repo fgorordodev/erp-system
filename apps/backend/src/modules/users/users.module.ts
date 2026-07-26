@@ -5,7 +5,7 @@ import { DatabaseModule } from '@backend/database';
 
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { UsersRepository } from './persistence';
+import { UsersRepository } from './persistence/user.repository';
 
 @Module({
   imports: [DatabaseModule, CryptoModule],
