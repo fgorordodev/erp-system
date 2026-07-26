@@ -3,42 +3,38 @@ import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import type { StringValue } from 'ms';
 
-import { BusinessException } from '@backend/common';
-import { JwtService } from '@backend/security/jwt';
-import { TokenService } from '@backend/security/token';
-import { UserMapper } from '@backend/modules/users';
+import { CredentialsService } from './credentials.service';
+import { RefreshTokenService } from './refresh-token.service';
+import { ErrorCode } from '@erp/api-contracts';
+import { SecureTokenService } from '@backend/crypto';
+import { AccessTokenService } from './access-token.service';
+import type { SessionMetadata } from '../interfaces/session-metadata.interface';
+import { LoginDto } from '../dto/login.dto';
+import type { LoginResult } from '../interfaces/login.result';
 import {
   AUTH_ERROR_MESSAGES,
   AUTH_SESSION_DURATION,
   AUTH_TOKEN_CONFIG,
-} from '@backend/modules/auth/constants';
-import { LoginDto, RefreshDto } from '@backend/modules/auth/dto';
-import {
-  LoginResponse,
-  RefreshTokenRotationStatus,
-  SessionMetadata,
-  TokenPair,
-} from '@backend/modules/auth/interfaces';
-import { CredentialsService } from './credentials.service';
-import { SessionService } from './session.service';
-import { RefreshTokenService } from './refresh-token.service';
-import { ErrorCode } from '@erp/api-contracts';
+} from '../constants/auth.constants';
+import { RefreshDto } from '../dto/refresh.dto';
+import type { TokenPairResult } from '../interfaces/token-pair.result';
+import { RefreshTokenRotationStatus } from '../interfaces/refresh-token-rotation.result';
+import { BusinessException } from '@backend/common';
+import { SessionRepository } from '../persistence/session/session.repository';
+import { UserMapper } from '@backend/modules/users';
 
 @Injectable()
 export class AuthenticationService {
   constructor(
     private readonly credentialsService: CredentialsService,
-    private readonly sessionService: SessionService,
+    private readonly sessionRepository: SessionRepository,
     private readonly refreshTokenService: RefreshTokenService,
-    private readonly tokenService: TokenService,
-    private readonly jwtService: JwtService,
+    private readonly secureTokenService: SecureTokenService,
+    private readonly accessTokenService: AccessTokenService,
     private readonly configService: ConfigService,
   ) {}
 
-  async login(
-    dto: LoginDto,
-    metadata: SessionMetadata,
-  ): Promise<LoginResponse> {
+  async login(dto: LoginDto, metadata: SessionMetadata): Promise<LoginResult> {
     const user = await this.credentialsService.validate(
       dto.email,
       dto.password,
@@ -46,26 +42,21 @@ export class AuthenticationService {
 
     const expiresAt = this.getSessionExpiration(dto.rememberMe);
 
-    const refreshToken = this.tokenService.generate(
+    const refreshToken = this.secureTokenService.generate(
       AUTH_TOKEN_CONFIG.REFRESH_TOKEN_BYTES,
     );
 
-    const refreshTokenHash = this.tokenService.hash(refreshToken);
+    const refreshTokenHash = this.secureTokenService.hash(refreshToken);
 
-    const session = await this.sessionService.create({
+    const session = await this.sessionRepository.createWithRefreshToken({
       userId: user.id,
       expiresAt,
       userAgent: metadata.userAgent,
       ipAddress: metadata.ipAddress,
+      refreshTokenHash,
     });
 
-    await this.refreshTokenService.create({
-      sessionId: session.id,
-      tokenHash: refreshTokenHash,
-      expiresAt,
-    });
-
-    const accessToken = await this.jwtService.generateAccessToken({
+    const accessToken = await this.accessTokenService.generate({
       sub: user.id,
       sessionId: session.id,
     });
@@ -78,14 +69,14 @@ export class AuthenticationService {
     };
   }
 
-  async refresh(dto: RefreshDto): Promise<TokenPair> {
-    const currentTokenHash = this.tokenService.hash(dto.refreshToken);
+  async refresh(dto: RefreshDto): Promise<TokenPairResult> {
+    const currentTokenHash = this.secureTokenService.hash(dto.refreshToken);
 
-    const newRefreshToken = this.tokenService.generate(
+    const newRefreshToken = this.secureTokenService.generate(
       AUTH_TOKEN_CONFIG.REFRESH_TOKEN_BYTES,
     );
 
-    const newTokenHash = this.tokenService.hash(newRefreshToken);
+    const newTokenHash = this.secureTokenService.hash(newRefreshToken);
 
     const rotation = await this.refreshTokenService.rotate({
       currentTokenHash,
@@ -96,7 +87,7 @@ export class AuthenticationService {
       throw this.invalidRefreshTokenException();
     }
 
-    const accessToken = await this.jwtService.generateAccessToken({
+    const accessToken = await this.accessTokenService.generate({
       sub: rotation.userId,
       sessionId: rotation.sessionId,
     });
@@ -109,7 +100,7 @@ export class AuthenticationService {
   }
 
   async logout(sessionId: string): Promise<void> {
-    await this.sessionService.revokeById(sessionId);
+    await this.sessionRepository.revokeById(sessionId);
   }
 
   private getSessionExpiration(rememberMe: boolean): Date {

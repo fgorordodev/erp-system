@@ -1,5 +1,8 @@
-import { UserResponseDto } from '@backend/modules/users/dto';
-import { UserAuthProjection, UserResponseProjection } from '../persistence';
+import { UserResponseDto } from '../dto/user-response.dto';
+import {
+  UserAuthProjection,
+  UserResponseProjection,
+} from '../persistence/user.projection';
 
 type UserMapperInput = UserResponseProjection | UserAuthProjection;
 

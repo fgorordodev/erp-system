@@ -16,6 +16,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { UsersService } from './users.service';
+import { PERMISSIONS } from '@erp/rbac';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
+import { Permissions } from '../authorization';
 import {
   ApiCreatedEnvelope,
   ApiErrorResponseDto,
@@ -24,16 +29,10 @@ import {
   ApiProtectedErrors,
   ApiValidationError,
 } from '@backend/common';
-import {
-  CreateUserDto,
-  UpdateUserDto,
-  UpdateUserStatusDto,
-  UserResponseDto,
-} from '@backend/modules/users/dto';
-import { CurrentUser, Permissions } from '@backend/security/decorator';
-import type { AuthenticatedUser } from '@backend/security/jwt/interfaces';
-import { UsersService } from './users.service';
-import { PERMISSIONS } from '@erp/rbac';
+import { UserResponseDto } from './dto/user-response.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')

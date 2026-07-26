@@ -2,6 +2,18 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
+import { throttlerConfig, validateEnv } from '@backend/config';
+import { DatabaseModule } from '@backend/database';
+
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import {
+  AuthorizationModule,
+  PermissionsGuard,
+  RolesGuard,
+} from './modules/authorization';
+import { AuthModule, JwtAuthGuard } from './modules/auth';
+import { HealthModule } from './modules/health';
+import { UsersModule } from './modules/users';
 import {
   HttpExceptionFilter,
   LoggerModule,
@@ -9,17 +21,7 @@ import {
   PrismaExceptionFilter,
   RequestIdMiddleware,
   ResponseInterceptor,
-} from '@backend/common';
-import { throttlerConfig, validateEnv } from '@backend/config';
-import { DatabaseModule } from '@backend/database';
-import { AuthModule, HealthModule, UsersModule } from '@backend/modules';
-import {
-  JwtAuthGuard,
-  PermissionsGuard,
-  RolesGuard,
-  SecurityModule,
-} from '@backend/security';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+} from './common';
 
 @Module({
   imports: [
@@ -31,10 +33,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     ThrottlerModule.forRootAsync(throttlerConfig),
     LoggerModule,
     DatabaseModule,
-    SecurityModule,
     HealthModule,
     UsersModule,
     AuthModule,
+    AuthorizationModule,
   ],
   providers: [
     {
@@ -63,11 +65,11 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     },
     {
       provide: APP_GUARD,
-      useClass: RolesGuard,
+      useExisting: RolesGuard,
     },
     {
       provide: APP_GUARD,
-      useClass: PermissionsGuard,
+      useExisting: PermissionsGuard,
     },
   ],
 })

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+
 import {
   IsBoolean,
   IsEmail,
@@ -8,8 +8,6 @@ import {
   MinLength,
 } from 'class-validator';
 
-import { normalizeEmail } from '@backend/common';
-
 export class LoginDto {
   @ApiProperty({
     description: 'Registered user email address.',
@@ -17,7 +15,6 @@ export class LoginDto {
     format: 'email',
   })
   @IsEmail()
-  @Transform(normalizeEmail)
   email!: string;
 
   @ApiProperty({
