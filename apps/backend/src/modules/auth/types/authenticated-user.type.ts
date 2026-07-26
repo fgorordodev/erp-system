@@ -1,7 +1,7 @@
-export interface AuthenticatedUser {
+export type AuthenticatedUser = {
   userId: string;
   sessionId: string;
-  email: string;
   roles: string[];
   permissions: string[];
-}
+  email: string;
+};

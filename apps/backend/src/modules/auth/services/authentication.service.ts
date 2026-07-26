@@ -8,17 +8,17 @@ import { RefreshTokenService } from './refresh-token.service';
 import { ErrorCode } from '@erp/api-contracts';
 import { SecureTokenService } from '@backend/crypto';
 import { AccessTokenService } from './access-token.service';
-import type { SessionMetadata } from '../interfaces/session-metadata.interface';
+import type { SessionMetadata } from '../contracts/session-metadata';
 import { LoginDto } from '../dto/login.dto';
-import type { LoginResult } from '../interfaces/login.result';
+import type { LoginResult } from '../contracts/login.result';
 import {
   AUTH_ERROR_MESSAGES,
   AUTH_SESSION_DURATION,
   AUTH_TOKEN_CONFIG,
 } from '../constants/auth.constants';
 import { RefreshDto } from '../dto/refresh.dto';
-import type { TokenPairResult } from '../interfaces/token-pair.result';
-import { RefreshTokenRotationStatus } from '../interfaces/refresh-token-rotation.result';
+import type { TokenPairResult } from '../contracts/token-pair.result';
+import { RefreshTokenRotationStatus } from '../contracts/refresh-token-rotation.result';
 import { BusinessException } from '@backend/common';
 import { SessionRepository } from '../persistence/session/session.repository';
 import { UserMapper } from '@backend/modules/users';

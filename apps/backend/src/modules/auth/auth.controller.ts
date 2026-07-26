@@ -16,7 +16,7 @@ import { CurrentSessionMetadata } from './decorators/session-metadata.decorator'
 import { AuthenticationService } from './services/authentication.service';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { LoginDto } from './dto/login.dto';
-import { SessionMetadata } from './interfaces/session-metadata.interface';
+import { SessionMetadata } from './contracts/session-metadata';
 import { TokenPairResponseDto } from './dto/token-pair-response.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
