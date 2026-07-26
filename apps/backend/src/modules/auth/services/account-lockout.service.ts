@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { PrismaService } from '@backend/database';
+import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class AccountLockoutService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -33,39 +33,24 @@ export class AccountLockoutService {
       'AUTH_LOCKOUT_DURATION_MS',
     );
 
-    const user = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        failedLoginAttempts: {
-          increment: 1,
-        },
-        lastFailedLoginAt: new Date(),
-      },
-      select: {
-        failedLoginAttempts: true,
-      },
-    });
+    const now = new Date();
+
+    const user = await this.usersService.incrementFailedLoginAttempts(
+      userId,
+      now,
+    );
 
     if (user.failedLoginAttempts < maxFailedAttempts) {
       return;
     }
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        lockedUntil: new Date(Date.now() + lockoutDurationMs),
-      },
-    });
+    await this.usersService.setLockedUntil(
+      userId,
+      new Date(now.getTime() + lockoutDurationMs),
+    );
   }
 
-  async reset(userId: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        lastFailedLoginAt: null,
-      },
-    });
+  reset(userId: string): Promise<void> {
+    return this.usersService.resetLoginFailures(userId);
   }
 }

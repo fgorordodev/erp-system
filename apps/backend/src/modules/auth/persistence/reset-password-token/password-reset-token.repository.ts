@@ -170,20 +170,4 @@ export class PasswordResetTokenRepository {
       },
     });
   }
-
-  async resetAccountLockout(
-    transaction: Prisma.TransactionClient,
-    userId: string,
-  ): Promise<void> {
-    await transaction.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        lastFailedLoginAt: null,
-      },
-    });
-  }
 }

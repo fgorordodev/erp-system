@@ -47,15 +47,17 @@ import { RefreshTokenRepository } from './persistence/refresh-token/refresh-toke
     AuthenticationService,
     AccountLockoutService,
     CredentialsService,
+
+    SessionRepository,
+    RefreshTokenRepository,
+    PasswordResetTokenRepository,
+
     JwtStrategy,
     JwtAuthGuard,
     AccessTokenService,
     RefreshTokenService,
     PasswordResetService,
     PasswordResetNotificationService,
-    PasswordResetTokenRepository,
-    SessionRepository,
-    RefreshTokenRepository,
   ],
   exports: [JwtAuthGuard, PassportModule],
 })

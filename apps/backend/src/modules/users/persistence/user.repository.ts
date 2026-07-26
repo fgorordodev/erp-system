@@ -6,6 +6,7 @@ import type { Prisma } from '@erp/database';
 import type { CreateUserInput, UpdateUserInput } from './inputs';
 import type {
   UserAuthProjection,
+  UserFailedLoginAttemptsProjection,
   UserResponseProjection,
 } from './user.projection';
 import { USER_AUTH_SELECT, USER_RESPONSE_SELECT } from './user.select';
@@ -147,6 +148,58 @@ export class UsersRepository {
       },
       data: {
         password: passwordHash,
+      },
+    });
+  }
+
+  incrementFailedLoginAttempts(
+    userId: string,
+    failedAt: Date,
+    database: UserDatabaseClient = this.prisma,
+  ): Promise<UserFailedLoginAttemptsProjection> {
+    return database.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        failedLoginAttempts: {
+          increment: 1,
+        },
+        lastFailedLoginAt: failedAt,
+      },
+      select: {
+        failedLoginAttempts: true,
+      },
+    });
+  }
+
+  async setLockedUntil(
+    userId: string,
+    lockedUntil: Date,
+    database: UserDatabaseClient = this.prisma,
+  ): Promise<void> {
+    await database.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        lockedUntil,
+      },
+    });
+  }
+
+  async resetLoginFailures(
+    userId: string,
+    database: UserDatabaseClient = this.prisma,
+  ): Promise<void> {
+    await database.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        lastFailedLoginAt: null,
       },
     });
   }

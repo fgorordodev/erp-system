@@ -109,9 +109,9 @@ export class PasswordResetService {
           now,
         );
 
-        await this.passwordResetTokenRepository.resetAccountLockout(
-          transaction,
+        await this.usersService.resetLoginFailures(
           resetToken.userId,
+          transaction,
         );
       },
     );

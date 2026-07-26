@@ -128,6 +128,45 @@ export class UsersService {
     return this.usersRepository.updatePassword(userId, passwordHash, database);
   }
 
+  incrementFailedLoginAttempts(
+    userId: string,
+    failedAt: Date,
+    database?: UserDatabaseClient,
+  ): Promise<{ failedLoginAttempts: number }> {
+    if (database) {
+      return this.usersRepository.incrementFailedLoginAttempts(
+        userId,
+        failedAt,
+        database,
+      );
+    }
+
+    return this.usersRepository.incrementFailedLoginAttempts(userId, failedAt);
+  }
+
+  setLockedUntil(
+    userId: string,
+    lockedUntil: Date,
+    database?: UserDatabaseClient,
+  ): Promise<void> {
+    if (database) {
+      return this.usersRepository.setLockedUntil(userId, lockedUntil, database);
+    }
+
+    return this.usersRepository.setLockedUntil(userId, lockedUntil);
+  }
+
+  resetLoginFailures(
+    userId: string,
+    database?: UserDatabaseClient,
+  ): Promise<void> {
+    if (database) {
+      return this.usersRepository.resetLoginFailures(userId, database);
+    }
+
+    return this.usersRepository.resetLoginFailures(userId);
+  }
+
   private async ensureUserExists(id: string): Promise<void> {
     const user = await this.usersRepository.findById(id);
 
