@@ -11,6 +11,7 @@ import type {
 import { USER_AUTH_SELECT, USER_RESPONSE_SELECT } from './user.select';
 import { CreateUserInput } from './inputs/create-user.input';
 import { UpdateUserInput } from './inputs/update-user.input';
+import { normalizeEmail } from '@backend/common';
 
 type UserDatabaseClient = Pick<Prisma.TransactionClient, 'user'>;
 
@@ -73,7 +74,7 @@ export class UsersRepository {
   findAuthByEmail(email: string): Promise<UserAuthProjection | null> {
     return this.prisma.user.findFirst({
       where: {
-        email: email.trim().toLowerCase(),
+        email: normalizeEmail(email),
         deletedAt: null,
       },
       select: USER_AUTH_SELECT,

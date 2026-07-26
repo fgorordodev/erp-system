@@ -1,30 +1,23 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '@backend/database';
+import type { Prisma } from '@erp/database';
 
 import { SESSION_AUTHORIZATION_SELECT, SESSION_SELECT } from './session.select';
 import type {
   SessionAuthorizationProjection,
   SessionProjection,
 } from './session.projection';
-import { CreateSessionInput } from './inputs/create-session.input';
 import { CreateSessionWithRefreshTokenInput } from './inputs/create-session-with-refresh-token.input';
+
+type SessionDatabaseClient = Pick<
+  Prisma.TransactionClient,
+  'session' | 'refreshToken'
+>;
 
 @Injectable()
 export class SessionRepository {
   constructor(private readonly prisma: PrismaService) {}
-
-  create(input: CreateSessionInput): Promise<SessionProjection> {
-    return this.prisma.session.create({
-      data: {
-        userId: input.userId,
-        expiresAt: input.expiresAt,
-        userAgent: input.userAgent,
-        ipAddress: input.ipAddress,
-      },
-      select: SESSION_SELECT,
-    });
-  }
 
   createWithRefreshToken(
     input: CreateSessionWithRefreshTokenInput,
@@ -99,5 +92,33 @@ export class SessionRepository {
     ]);
 
     return sessionResult.count === 1;
+  }
+
+  async revokeAllByUserId(
+    userId: string,
+    revokedAt: Date,
+    database: SessionDatabaseClient = this.prisma,
+  ): Promise<void> {
+    await database.refreshToken.updateMany({
+      where: {
+        session: {
+          userId,
+        },
+        revokedAt: null,
+      },
+      data: {
+        revokedAt,
+      },
+    });
+
+    await database.session.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt,
+      },
+    });
   }
 }

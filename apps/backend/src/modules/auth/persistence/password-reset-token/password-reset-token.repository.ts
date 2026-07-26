@@ -115,32 +115,4 @@ export class PasswordResetTokenRepository {
       },
     });
   }
-
-  async revokeAuthenticationSessions(
-    transaction: Prisma.TransactionClient,
-    userId: string,
-    revokedAt: Date,
-  ): Promise<void> {
-    await transaction.refreshToken.updateMany({
-      where: {
-        session: {
-          userId,
-        },
-        revokedAt: null,
-      },
-      data: {
-        revokedAt,
-      },
-    });
-
-    await transaction.session.updateMany({
-      where: {
-        userId,
-        revokedAt: null,
-      },
-      data: {
-        revokedAt,
-      },
-    });
-  }
 }

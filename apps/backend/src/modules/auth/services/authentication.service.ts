@@ -3,26 +3,25 @@ import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import type { StringValue } from 'ms';
 
-import { UserMapper } from '@backend/modules/users';
-
 import { CredentialsService } from './credentials.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { ErrorCode } from '@erp/api-contracts';
 import { SecureTokenService } from '@backend/crypto';
 import { AccessTokenService } from './access-token.service';
-import { SessionMetadata } from '../interfaces/session-metadata.interface';
+import type { SessionMetadata } from '../interfaces/session-metadata.interface';
 import { LoginDto } from '../dto/login.dto';
-import { LoginResponse } from '../interfaces/login-response.interface';
+import type { LoginResponse } from '../interfaces/login-response.interface';
 import {
   AUTH_ERROR_MESSAGES,
   AUTH_SESSION_DURATION,
   AUTH_TOKEN_CONFIG,
 } from '../constants/auth.constants';
 import { RefreshDto } from '../dto/refresh.dto';
-import { TokenPair } from '../interfaces/token-pair.interface';
+import type { TokenPair } from '../interfaces/token-pair.interface';
 import { RefreshTokenRotationStatus } from '../interfaces/refresh-token-rotation-result';
 import { BusinessException } from '@backend/common';
 import { SessionRepository } from '../persistence/session/session.repository';
+import { UserMapper } from '@backend/modules/users';
 
 @Injectable()
 export class AuthenticationService {

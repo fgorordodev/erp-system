@@ -12,7 +12,7 @@ import { UsersRepository } from './persistence/user.repository';
 import { UserResponseDto } from './dto/user-response.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { BusinessException } from '@backend/common';
+import { BusinessException, normalizeEmail } from '@backend/common';
 import { CreateUserInput } from './persistence/inputs/create-user.input';
 import { UpdateUserInput } from './persistence/inputs/update-user.input';
 
@@ -26,7 +26,9 @@ export class UsersService {
   ) {}
 
   async create(dto: CreateUserDto): Promise<UserResponseDto> {
-    await this.ensureEmailAvailable(dto.email);
+    const normalizedEmail = normalizeEmail(dto.email);
+
+    await this.ensureEmailAvailable(normalizedEmail);
 
     const defaultRoleId = await this.usersRepository.findRoleIdByName(
       ROLES.EMPLOYEE,
@@ -80,13 +82,16 @@ export class UsersService {
   async update(id: string, dto: UpdateUserDto): Promise<UserResponseDto> {
     await this.ensureUserExists(id);
 
-    if (dto.email !== undefined) {
-      await this.ensureEmailAvailable(dto.email, id);
+    const normalizedEmail =
+      dto.email !== undefined ? normalizeEmail(dto.email) : undefined;
+
+    if (normalizedEmail !== undefined) {
+      await this.ensureEmailAvailable(normalizedEmail, id);
     }
 
     const input: UpdateUserInput = {
-      ...(dto.email !== undefined && {
-        email: dto.email,
+      ...(normalizedEmail !== undefined && {
+        email: normalizedEmail,
       }),
       ...(dto.firstName !== undefined && {
         firstName: dto.firstName.trim(),

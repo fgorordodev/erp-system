@@ -10,6 +10,7 @@ import { PasswordResetNotificationService } from './password-reset-notification.
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { AUTH_ERROR_MESSAGES } from '../constants/auth.constants';
 import { PasswordResetTokenRepository } from '../persistence/password-reset-token/password-reset-token.repository';
+import { SessionRepository } from '../persistence/session/session.repository';
 import { BusinessException } from '@backend/common';
 
 @Injectable()
@@ -21,6 +22,7 @@ export class PasswordResetService {
     private readonly passwordResetTokenRepository: PasswordResetTokenRepository,
     private readonly notificationService: PasswordResetNotificationService,
     private readonly configService: ConfigService,
+    private readonly sessionRepository: SessionRepository,
   ) {}
 
   async request(email: string): Promise<void> {
@@ -103,10 +105,10 @@ export class PasswordResetService {
           now,
         );
 
-        await this.passwordResetTokenRepository.revokeAuthenticationSessions(
-          transaction,
+        await this.sessionRepository.revokeAllByUserId(
           resetToken.userId,
           now,
+          transaction,
         );
 
         await this.usersService.resetLoginFailures(
