@@ -9,8 +9,8 @@ import { PasswordHasherService, SecureTokenService } from '@backend/crypto';
 import { UsersService } from '../../users/users.service';
 import { AUTH_ERROR_MESSAGES } from '../constants';
 import { ResetPasswordDto } from '../dto';
-import { PasswordResetTokenRepository } from '../persistence/reset-password-token/password-reset-token.repository';
 import { PasswordResetNotificationService } from './password-reset-notification.service';
+import { PasswordResetTokenRepository } from '../persistence/password-reset-token';
 
 @Injectable()
 export class PasswordResetService {

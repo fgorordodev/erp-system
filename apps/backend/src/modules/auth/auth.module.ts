@@ -17,8 +17,9 @@ import { CredentialsService } from './services/credentials.service';
 import { RefreshTokenService } from './services/refresh-token.service';
 import { PasswordResetNotificationService } from './services/password-reset-notification.service';
 import { UsersModule } from '../users';
-import { PasswordResetTokenRepository, SessionRepository } from './persistence';
+import { SessionRepository } from './persistence';
 import { RefreshTokenRepository } from './persistence/refresh-token/refresh-token.repository';
+import { PasswordResetTokenRepository } from './persistence/password-reset-token';
 
 @Module({
   imports: [
