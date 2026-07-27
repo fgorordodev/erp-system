@@ -11,226 +11,310 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)](docker-compose.yml)
 [![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&logoColor=white)](packages/database/package.json)
 
-A modular, type-safe ERP platform developed as a professional full-stack monorepo. The current implementation provides the technical foundation for authentication, persistent sessions, refresh-token rotation, role-based access control, user administration, PostgreSQL persistence, API documentation and automated quality checks.
+A modern Enterprise Resource Planning (ERP) platform built with a full-stack TypeScript monorepo.
 
-> **Current state:** the backend identity and security foundation is implemented. The frontend is an initial React/Vite shell. Inventory, sales, purchasing, accounting and other ERP domains are planned but not yet implemented.
+The project is designed to become a complete business management solution where every operational process is integrated into a single platform through independent but connected modules.
 
-## Contents
+Rather than focusing only on delivering features quickly, this project emphasizes building a robust architecture capable of supporting years of continuous evolution while maintaining security, consistency and maintainability.
 
-- [Highlights](#highlights)
-- [Architecture](#architecture)
-- [Repository structure](#repository-structure)
-- [Requirements](#requirements)
-- [Getting started](#getting-started)
-- [Available commands](#available-commands)
-- [API surface](#api-surface)
-- [Documentation](#documentation)
-- [Project status](#project-status)
-- [Contributing](#contributing)
+---
 
-## Highlights
+## Project Vision
 
-- NestJS 11 REST API with feature-oriented modules.
-- JWT access tokens tied to persistent, revocable sessions.
-- Hashed, one-time refresh tokens with rotation and reuse detection.
-- Multi-role RBAC with explicit permissions.
-- User creation, listing, profile retrieval, update, status control and soft deletion.
-- Prisma 7 package isolated behind `@erp/database`.
-- PostgreSQL 17 through Docker Compose.
-- Swagger/OpenAPI and a Postman collection.
-- Global validation, CORS, Helmet, request identifiers, logging and normalized API responses.
-- Turborepo orchestration and GitHub Actions quality checks.
+ERP System aims to provide a comprehensive platform for managing the core operations of a company from a single application.
+
+The long-term goal is to integrate all business domains into a cohesive ecosystem, allowing organizations to centralize information, automate workflows and improve operational efficiency.
+
+Planned modules include:
+
+- Identity & Access Management
+- User Administration
+- Products
+- Inventory
+- Warehouses
+- Customers
+- Suppliers
+- Sales
+- Purchasing
+- Accounting
+- Treasury
+- Human Resources
+- Reporting & Analytics
+- Notifications
+- File Management
+- Audit Logging
+- Multi-tenancy
+
+Each module is designed to be developed independently while sharing the same architectural principles and infrastructure.
+
+---
+
+## Current Status
+
+The project has completed its technical foundation.
+
+Implemented features include:
+
+- Authentication
+- Authorization
+- User Management
+- Role-Based Access Control (RBAC)
+- Permission Management
+- Persistent Sessions
+- Refresh Token Rotation
+- Password Recovery
+- Account Lockout Protection
+- PostgreSQL Persistence
+- API Documentation
+- Continuous Integration
+- Shared Workspace Packages
+
+With the platform infrastructure in place, development is now focused on implementing ERP business modules.
+
+---
+
+## Development Philosophy
+
+Every architectural decision follows a consistent set of engineering principles.
+
+- Security by default
+- Explicit, readable code
+- Strong typing with TypeScript
+- Modular feature-based architecture
+- SOLID principles where appropriate
+- Composition over inheritance
+- Business logic isolated from infrastructure
+- Maintainability over premature optimization
+- Long-term scalability over short-term speed
+
+The objective is not only to build an ERP, but also to create a codebase that remains understandable and maintainable as it grows.
+
+---
+
+## Technology Stack
+
+### Backend
+
+- NestJS 11
+- Prisma ORM
+- PostgreSQL
+- JWT Authentication
+- RBAC
+- Refresh Token Rotation
+- Session Management
+
+### Frontend
+
+- React 19
+- Vite
+- TypeScript
+
+### Workspace
+
+- pnpm Workspaces
+- Turborepo
+
+### Tooling
+
+- ESLint
+- Prettier
+- Husky
+- lint-staged
+- GitHub Actions
+
+---
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    Client["React client\n(current shell)"]
-    API["NestJS API"]
-    Cross["Cross-cutting infrastructure\nvalidation · logging · errors"]
-    Auth["Authentication"]
-    Users["User administration"]
-    Security["JWT · guards · RBAC · crypto"]
-    DBPkg["@erp/database"]
-    DB[("PostgreSQL 17")]
-
-    Client -->|HTTP| API
-    API --> Cross
-    API --> Auth
-    API --> Users
-    Auth --> Security
-    Users --> Security
-    Auth --> DBPkg
-    Users --> DBPkg
-    Security --> DBPkg
-    DBPkg --> DB
+```
+                      React Frontend
+                             │
+                      REST API (NestJS)
+                             │
+     ┌───────────────┬───────────────┬───────────────┐
+     │               │               │
+ Authentication   User Module   Future ERP Modules
+     │               │               │
+     └──────────── Shared Infrastructure ────────────┘
+                     │
+               Prisma ORM
+                     │
+               PostgreSQL
 ```
 
-The API separates workflow-specific authentication code from reusable security infrastructure. See [Architecture](docs/ARCHITECTURE.md), [Security](docs/SECURITY.md) and [Database](docs/DATABASE.md).
+The backend follows a feature-oriented modular architecture where every domain encapsulates its own controllers, services, repositories, DTOs, mappers and security components.
 
-## Repository structure
+Business rules remain inside Services while repositories are responsible exclusively for persistence.
+
+---
+
+## Repository Structure
 
 ```text
 erp-system/
 ├── apps/
-│   ├── backend/              # NestJS REST API
-│   └── frontend/             # React + Vite application shell
+│   ├── backend/
+│   └── frontend/
+│
 ├── packages/
-│   ├── api-contracts/        # Shared error codes/contracts
-│   ├── database/             # Prisma schema, migrations, client and seed
-│   ├── rbac/                 # Role and permission definitions
-│   └── tsconfig/             # Shared TypeScript configuration
-├── postman/                  # API collection and local environment
-├── docs/                     # Project documentation
-├── .github/workflows/ci.yml
+│   ├── api-contracts/
+│   ├── database/
+│   ├── rbac/
+│   └── tsconfig/
+│
+├── docs/
+├── postman/
 ├── docker-compose.yml
 ├── turbo.json
 └── pnpm-workspace.yaml
 ```
 
-## Requirements
+---
 
-- Node.js `>=20.19.0`
-- pnpm `>=10.0.0` — repository package manager: `10.15.1`
-- Docker and Docker Compose
-- Git
+## Getting Started
 
-## Getting started
+### Requirements
+
+- Node.js >= 20.19
+- pnpm >= 10
+- Docker
+- Docker Compose
+
+### Installation
 
 ```bash
 git clone git@github.com:fgorordodev/erp-system.git
+
 cd erp-system
+
 pnpm install
+
 cp .env.example .env
 ```
 
-Generate secure secrets and replace the placeholder values in `.env`:
+Generate secure secrets:
 
 ```bash
-openssl rand -hex 64 # JWT_ACCESS_SECRET
-openssl rand -hex 64 # JWT_REFRESH_SECRET
-openssl rand -hex 32 # ENCRYPTION_KEY
+openssl rand -hex 64
 ```
 
-Start PostgreSQL, apply migrations and seed the development administrator:
+Start the database:
 
 ```bash
 docker compose up -d
+```
+
+Run migrations:
+
+```bash
 pnpm db:migrate
+```
+
+Seed development data:
+
+```bash
 pnpm db:seed
+```
+
+Generate Prisma Client:
+
+```bash
 pnpm db:build
 ```
 
-Run the workspace:
+Start the workspace:
 
 ```bash
 pnpm dev
 ```
 
+---
+
+## Services
+
 | Service | URL |
-|---|---|
-| API | `http://localhost:3000/api` |
-| Swagger UI | `http://localhost:3000/docs` |
-| OpenAPI JSON | `http://localhost:3000/docs-json` |
-| Frontend | `http://localhost:5173` |
-| Health | `http://localhost:3000/api/health` |
+|---------|-----|
+| API | http://localhost:3000/api |
+| Swagger | http://localhost:3000/docs |
+| OpenAPI | http://localhost:3000/docs-json |
+| Frontend | http://localhost:5173 |
+| Health | http://localhost:3000/api/health |
 
-## Available commands
+---
 
-| Command | Purpose |
-|---|---|
-| `pnpm dev` | Run workspace development tasks |
-| `pnpm dev:backend` | Run only the NestJS API |
-| `pnpm dev:frontend` | Run only the React app |
-| `pnpm build` | Build packages and applications |
-| `pnpm lint` | Run configured ESLint tasks |
-| `pnpm typecheck` | Run TypeScript validation |
-| `pnpm test` | Run available test suites |
-| `pnpm clean` | Clean workspace outputs and root dependencies |
-| `pnpm db:generate` | Generate Prisma Client |
-| `pnpm db:build` | Generate and build `@erp/database` |
-| `pnpm db:migrate` | Create/apply a development migration |
-| `pnpm db:deploy` | Apply committed migrations |
-| `pnpm db:seed` | Seed permissions, roles and administrator |
-| `pnpm db:studio` | Open Prisma Studio |
+## Available Commands
 
-## API surface
+| Command | Description |
+|----------|-------------|
+| pnpm dev | Start development environment |
+| pnpm build | Build all packages |
+| pnpm lint | Run ESLint |
+| pnpm typecheck | Run TypeScript validation |
+| pnpm test | Execute tests |
+| pnpm clean | Clean workspace |
+| pnpm db:migrate | Run Prisma migrations |
+| pnpm db:seed | Seed database |
+| pnpm db:studio | Open Prisma Studio |
 
-Public routes:
+---
 
-- `GET /api/health`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
+## Roadmap
 
-Authenticated routes:
+### ✅ Platform Foundation
 
-- `POST /api/auth/logout`
-- `GET /api/users/me`
+- Monorepo architecture
+- Backend infrastructure
+- Authentication
+- Authorization
+- RBAC
+- User Management
+- Sessions
+- Refresh Tokens
+- Database Layer
+- Swagger
+- CI Pipeline
 
-Permission-protected user administration:
+### 🚧 In Progress
 
-- `POST /api/users`
-- `GET /api/users`
-- `GET /api/users/:id`
-- `PATCH /api/users/:id`
-- `PATCH /api/users/:id/status`
-- `DELETE /api/users/:id`
+- Frontend application
+- Repository improvements
+- Automated testing
+- API refinements
 
-See [API Reference](docs/API.md) or import `postman/ERP-System.postman_collection.json`.
+### 📋 Planned Modules
+
+- Products
+- Inventory
+- Warehouses
+- Customers
+- Suppliers
+- Sales
+- Purchasing
+- Accounting
+- Treasury
+- Reporting
+- Notifications
+- Audit
+- Multi-tenancy
+
+---
 
 ## Documentation
 
-| Document | Description |
-|---|---|
-| [Documentation index](docs/README.md) | Navigation hub |
-| [Architecture](docs/ARCHITECTURE.md) | System boundaries and request lifecycle |
-| [Backend](docs/BACKEND.md) | NestJS modules and conventions |
-| [Frontend](docs/FRONTEND.md) | Current frontend state and intended boundaries |
-| [Security](docs/SECURITY.md) | Authentication, sessions, tokens and RBAC |
-| [Database](docs/DATABASE.md) | Prisma schema, migrations and seed |
-| [API](docs/API.md) | Endpoints, envelopes and errors |
-| [Packages](docs/PACKAGES.md) | Shared workspace packages |
-| [Development](docs/DEVELOPMENT.md) | Local setup and workflow |
-| [Testing](docs/TESTING.md) | Current coverage and test strategy |
-| [CI/CD](docs/CI_CD.md) | Existing CI and deployment guidance |
-| [Operations](docs/OPERATIONS.md) | Environment, health and production concerns |
-| [Roadmap](docs/ROADMAP.md) | Implemented and planned work |
-| [ADRs](docs/adr/README.md) | Architecture decisions |
+The `/docs` directory contains detailed documentation covering architecture, backend, frontend, database, security, testing and development workflow.
 
-## Project status
-
-### Implemented
-
-- Monorepo foundation
-- Backend bootstrap and configuration validation
-- PostgreSQL/Prisma persistence
-- User, role, permission, session and refresh-token models
-- Authentication and logout
-- Refresh-token rotation with reuse detection
-- Multi-role RBAC
-- User administration and soft deletion
-- Health endpoint
-- Swagger/OpenAPI generation and validation scripts
-- CI quality workflow
-
-### Not implemented yet
-
-- Production-ready frontend workflows
-- Pagination and filtering for user lists
-- Password-change endpoint
-- Role-assignment administration endpoints
-- Rate limiting
-- Audit log
-- Multi-factor authentication
-- Multi-tenancy
-- ERP business modules
-- Deployment workflow
-- Broad automated test coverage
+---
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Development Guide](docs/DEVELOPMENT.md). Use focused branches and Conventional Commit-style messages.
+Contributions are welcome.
+
+Please read `CONTRIBUTING.md` before opening issues or pull requests.
+
+---
 
 ## License
 
-Distributed under the [MIT License](LICENSE). Copyright © 2026 Fernando Gorordo.
+Distributed under the MIT License.
+
+Copyright © 2026 Fernando Gorordo.
