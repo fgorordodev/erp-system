@@ -43,7 +43,7 @@ export class UsersService {
     }
 
     const input: CreateUserInput = {
-      email: dto.email,
+      email: normalizedEmail,
       passwordHash: await this.passwordHasher.hash(dto.password),
       firstName: dto.firstName.trim(),
       lastName: dto.lastName.trim(),

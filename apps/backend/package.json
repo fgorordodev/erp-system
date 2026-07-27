@@ -8,12 +8,12 @@
     "build": "nest build",
     "start": "nest start",
     "start:prod": "cross-env TS_NODE_BASEURL=./dist node -r tsconfig-paths/register dist/main.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit && tsc -p tsconfig.test.json --noEmit",
     "lint": "eslint \"{src,test}/**/*.ts\"",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:ci": "jest --runInBand",
     "clean": "rimraf dist",
     "swagger:generate": "tsx scripts/generate-openapi.ts",
     "swagger:validate": "pnpm run swagger:generate && tsx scripts/validate-openapi.ts",
@@ -93,7 +93,8 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "moduleNameMapper": {
-      "^@backend/(.*)$": "<rootDir>/$1"
+      "^@backend/(.*)$": "<rootDir>/$1",
+      "^@test/(.*)$": "<rootDir>/../test/$1"
     }
   }
 }
