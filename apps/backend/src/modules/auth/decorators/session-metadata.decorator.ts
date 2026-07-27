@@ -1,7 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
-
-import { SessionMetadata } from '@backend/modules/auth/interfaces';
+import { SessionMetadata } from '../contracts/session-metadata';
 
 export const CurrentSessionMetadata = createParamDecorator(
   (_data: unknown, context: ExecutionContext): SessionMetadata => {

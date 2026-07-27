@@ -9,7 +9,8 @@
     "outDir": "./dist",
 
     "paths": {
-      "@backend/*": ["./src/*"]
+      "@backend/*": ["./src/*"],
+      "@test/*": ["./test/*"]
     },
 
     "sourceMap": true,
@@ -28,8 +29,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
 
-    "types": ["node"]
+    "types": ["node", "jest"]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts", "**/*.test.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -8,4 +8,5 @@ export type {
   RolePermission,
   Session,
   RefreshToken,
+  PasswordResetToken,
 } from "./generated/prisma/client";

@@ -7,6 +7,19 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
+import { PasswordResetService } from './services/password-reset.service';
+
+import { Public } from './decorators/public.decorator';
+import { CurrentUser } from './decorators/current-user.decorator';
+import type { AuthenticatedUser } from './types/authenticated-user.type';
+import { CurrentSessionMetadata } from './decorators/session-metadata.decorator';
+import { AuthenticationService } from './services/authentication.service';
+import { LoginResponseDto } from './dto/login-response.dto';
+import { LoginDto } from './dto/login.dto';
+import { SessionMetadata } from './contracts/session-metadata';
+import { TokenPairResponseDto } from './dto/token-pair-response.dto';
+import { RefreshDto } from './dto/refresh.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import {
   ApiErrorResponseDto,
   ApiInternalError,
@@ -14,21 +27,15 @@ import {
   ApiProtectedErrors,
   ApiValidationError,
 } from '@backend/common';
-import { CurrentSessionMetadata } from '@backend/modules/auth/decorators';
-import {
-  LoginDto,
-  LoginResponseDto,
-  RefreshDto,
-  TokenPairResponseDto,
-} from '@backend/modules/auth/dto';
-import type { SessionMetadata } from '@backend/modules/auth/interfaces';
-import { AuthenticationService } from '@backend/modules/auth/services';
-import { type AuthenticatedUser, CurrentUser, Public } from '@backend/security';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authenticationService: AuthenticationService) {}
+  constructor(
+    private readonly authenticationService: AuthenticationService,
+    private readonly passwordResetService: PasswordResetService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -92,5 +99,32 @@ export class AuthController {
   @ApiInternalError()
   async logout(@CurrentUser() user: AuthenticatedUser): Promise<void> {
     await this.authenticationService.logout(user.sessionId);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Reset account password',
+  })
+  @ApiNoContentResponse({
+    description: 'Password successfully reset.',
+  })
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    await this.passwordResetService.reset(dto);
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Request a password reset',
+  })
+  @ApiNoContentResponse({
+    description:
+      'The request was accepted regardless of whether the account exists.',
+  })
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
+    await this.passwordResetService.request(dto.email);
   }
 }

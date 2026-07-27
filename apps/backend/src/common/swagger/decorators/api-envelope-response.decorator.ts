@@ -5,8 +5,7 @@ import {
   ApiOkResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
-
-import { ApiSuccessResponseDto } from '@backend/common/swagger/dto';
+import { ApiSuccessResponseDto } from '../dto/api-success-response.dto';
 
 interface EnvelopeOptions {
   description: string;

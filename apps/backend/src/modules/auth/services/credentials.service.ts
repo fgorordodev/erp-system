@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 
-import { BusinessException } from '@backend/common';
-import { HashService } from '@backend/security/crypto';
-import { UserAuthProjection, UsersService } from '@backend/modules/users';
-import { AUTH_ERROR_MESSAGES } from '@backend/modules/auth/constants';
 import { ErrorCode } from '@erp/api-contracts';
 import { AccountLockoutService } from './account-lockout.service';
+import { PasswordHasherService } from '@backend/crypto';
+import { UserAuthProjection, UsersService } from '@backend/modules/users';
+import { AUTH_ERROR_MESSAGES } from '../constants/auth.constants';
+import { BusinessException } from '@backend/common';
 
 @Injectable()
 export class CredentialsService {
   constructor(
     private readonly usersService: UsersService,
-    private readonly hashService: HashService,
+    private readonly passwordHasherService: PasswordHasherService,
     private readonly accountLockoutService: AccountLockoutService,
   ) {}
 
@@ -31,7 +31,7 @@ export class CredentialsService {
       throw this.invalidCredentialsException();
     }
 
-    const passwordMatches = await this.hashService.compare(
+    const passwordMatches = await this.passwordHasherService.compare(
       password,
       user.password,
     );

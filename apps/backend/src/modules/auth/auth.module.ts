@@ -1,28 +1,66 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule, type JwtSignOptions } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 
-import { UsersModule } from '@backend/modules/users';
-import {
-  AccountLockoutService,
-  AuthenticationService,
-  CredentialsService,
-  RefreshTokenService,
-  SessionService,
-} from '@backend/modules/auth/services';
+import { CryptoModule } from '@backend/crypto';
 import { DatabaseModule } from '@backend/database';
-import { JwtStrategy } from '@backend/modules/auth/strategies';
-import { SecurityJwtModule } from '@backend/security/jwt';
+
 import { AuthController } from './auth.controller';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AccessTokenService } from './services/access-token.service';
+import { PasswordResetService } from './services/password-reset.service';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { AuthenticationService } from './services/authentication.service';
+import { AccountLockoutService } from './services/account-lockout.service';
+import { CredentialsService } from './services/credentials.service';
+import { RefreshTokenService } from './services/refresh-token.service';
+import { PasswordResetNotificationService } from './services/password-reset-notification.service';
+
+import { RefreshTokenRepository } from './persistence/refresh-token/refresh-token.repository';
+import { SessionRepository } from './persistence/session/session.repository';
+import { PasswordResetTokenRepository } from './persistence/password-reset-token/password-reset-token.repository';
+import { UsersModule } from '../users';
 
 @Module({
-  imports: [DatabaseModule, SecurityJwtModule, UsersModule],
+  imports: [
+    ConfigModule,
+    DatabaseModule,
+    CryptoModule,
+    UsersModule,
+    PassportModule.register({
+      defaultStrategy: 'jwt',
+    }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+        signOptions: {
+          expiresIn: configService.getOrThrow<string>(
+            'JWT_ACCESS_EXPIRES',
+          ) as JwtSignOptions['expiresIn'],
+        },
+      }),
+    }),
+  ],
   controllers: [AuthController],
   providers: [
     AuthenticationService,
     AccountLockoutService,
     CredentialsService,
-    SessionService,
+
+    SessionRepository,
+    RefreshTokenRepository,
+    PasswordResetTokenRepository,
+
     JwtStrategy,
+    JwtAuthGuard,
+    AccessTokenService,
     RefreshTokenService,
+    PasswordResetService,
+    PasswordResetNotificationService,
   ],
+  exports: [JwtAuthGuard, PassportModule],
 })
 export class AuthModule {}

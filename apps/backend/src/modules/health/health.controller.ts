@@ -6,9 +6,9 @@ import {
 } from '@nestjs/swagger';
 
 import { ApiErrorResponseDto, ApiOkEnvelope } from '@backend/common';
-import { Public } from '@backend/security';
 import { HealthResponseDto } from './dto';
 import { HealthService } from './health.service';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Health')
 @Controller('health')

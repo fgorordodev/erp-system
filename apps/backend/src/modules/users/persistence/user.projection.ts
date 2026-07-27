@@ -8,3 +8,7 @@ export type UserResponseProjection = Prisma.UserGetPayload<{
 export type UserAuthProjection = Prisma.UserGetPayload<{
   select: typeof USER_AUTH_SELECT;
 }>;
+
+export type UserFailedLoginAttemptsProjection = {
+  failedLoginAttempts: number;
+};
